@@ -1,1 +1,75 @@
-"""Placeholder adapter for future FRED ingestion. No network calls in MVP."""
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
+
+from sqlalchemy.orm import Session
+
+from project_stock.ingest.base import CollectorIngestResult, OfficialCollector
+from project_stock.ingest.sources import register_official_sources
+from project_stock.normalize.time import safe_available_from
+from project_stock.schemas.common import SchemaBase
+from project_stock.schemas.indicators import IndicatorObservationCreate
+from project_stock.storage.repository import Repository
+
+
+class FredIndicatorRecord(SchemaBase):
+    indicator_id: str
+    observation_period: str
+    value: float
+    unit: str | None = None
+    release_at: datetime
+    collected_at: datetime | None = None
+    available_from: datetime | None = None
+    vintage_date: str | None = None
+    source_id: str = "FRED"
+
+
+class FredCollector(OfficialCollector[FredIndicatorRecord, IndicatorObservationCreate]):
+    collector_id = "fred"
+    source_id = "FRED"
+    api_key_env_var = "FRED_API_KEY"
+
+    def raw_schema(self) -> type[FredIndicatorRecord]:
+        return FredIndicatorRecord
+
+    def normalize(self, raw_records: list[FredIndicatorRecord]) -> list[IndicatorObservationCreate]:
+        observations: list[IndicatorObservationCreate] = []
+        for record in raw_records:
+            collected_at = record.collected_at or record.release_at
+            observations.append(
+                IndicatorObservationCreate(
+                    source_id=self.source_id,
+                    indicator_id=record.indicator_id,
+                    observation_period=record.observation_period,
+                    value=record.value,
+                    unit=record.unit,
+                    release_at=record.release_at,
+                    collected_at=collected_at,
+                    available_from=safe_available_from(
+                        record.available_from,
+                        record.release_at,
+                        collected_at,
+                    ),
+                    vintage_date=record.vintage_date,
+                    metadata_json={"vintage_support": "alfred_ready"},
+                )
+            )
+        return observations
+
+    def ingest(
+        self,
+        session: Session,
+        fixture: Path | None = None,
+        mock: bool = True,
+    ) -> CollectorIngestResult:
+        register_official_sources(session)
+        repo = Repository(session)
+        records = self.normalize(self.fetch_raw(fixture=fixture, mock=mock))
+        inserted_ids = [repo.add_indicator_observation(record).observation_id for record in records]
+        return CollectorIngestResult(
+            collector_id=self.collector_id,
+            source_id=self.source_id,
+            inserted_count=len(inserted_ids),
+            record_ids=inserted_ids,
+        )

@@ -41,11 +41,38 @@ The emergency fixture returns a rate-shock scenario match, risk actions,
 forbidden actions, and appends EvidenceLedger and DecisionLog records. The daily
 run writes a markdown memo under `data/processed/`.
 
+## Official Data Mock Demo
+
+These commands register official source metadata and ingest one deterministic
+offline fixture from each collector. No API keys or network calls are required.
+
+```bash
+project-stock register-sources --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock ingest-official-mock-bundle --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Individual mock collectors are also available:
+
+```bash
+project-stock ingest-dart-mock --fixture tests/fixtures/official/dart_disclosures.json
+project-stock ingest-ecos-mock --fixture tests/fixtures/official/ecos_indicators.json
+project-stock ingest-fred-mock --fixture tests/fixtures/official/fred_indicators.json
+project-stock ingest-krx-mock --fixture tests/fixtures/official/krx_market.json
+project-stock ingest-news-mock --fixture tests/fixtures/official/news_rss.json
+```
+
 ## CLI Commands
 
 - `project-stock init-db`: creates the SQLite schema.
+- `project-stock register-sources`: inserts official source metadata.
 - `project-stock load-yaml`: validates thesis, scenario, and playbook YAML.
 - `project-stock ingest-mock`: inserts deterministic mock raw documents and events.
+- `project-stock ingest-dart-mock`: ingests mock OpenDART disclosures.
+- `project-stock ingest-ecos-mock`: ingests mock ECOS macro indicators.
+- `project-stock ingest-fred-mock`: ingests mock FRED macro indicators.
+- `project-stock ingest-krx-mock`: ingests mock KRX market series.
+- `project-stock ingest-news-mock`: ingests mock RSS/news items with checksum dedupe.
+- `project-stock ingest-official-mock-bundle`: runs one mock fixture per official collector.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -57,6 +84,7 @@ run writes a markdown memo under `data/processed/`.
 - `scenarios/`: triggerable scenario definitions.
 - `playbooks/`: risk-action playbooks; never broker orders.
 - `src/project_stock/db/`: SQLAlchemy models and DB initialization.
+- `src/project_stock/ingest/`: official collector interfaces and mock collectors.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
 - `tests/fixtures/`: deterministic local fixtures.

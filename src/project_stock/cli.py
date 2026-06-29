@@ -14,7 +14,14 @@ from project_stock.db.models import RawDocument
 from project_stock.db.session import session_scope
 from project_stock.events.classifier import event_from_document
 from project_stock.events.mapper import map_entities
+from project_stock.ingest.dart import OpenDartCollector
+from project_stock.ingest.ecos import EcosCollector
+from project_stock.ingest.fred import FredCollector
+from project_stock.ingest.krx import KrxCollector
 from project_stock.ingest.mock import ingest_mock_data
+from project_stock.ingest.news import NewsRssCollector
+from project_stock.ingest.official_bundle import ingest_official_mock_bundle as ingest_bundle
+from project_stock.ingest.sources import register_official_sources
 from project_stock.scoring.big_flow import score_big_flow as compute_big_flow_score
 from project_stock.schemas.scoring import BigFlowScoreInput
 from project_stock.sentinel.daily import run_daily_sentinel
@@ -26,6 +33,7 @@ from project_stock.playbooks.loader import load_playbook_dir
 
 app = typer.Typer(no_args_is_help=True)
 console = Console()
+DEFAULT_OFFICIAL_FIXTURE_DIR = Path("tests/fixtures/official")
 
 
 def _echo_json(payload: Any) -> None:
@@ -36,6 +44,15 @@ def _echo_json(payload: Any) -> None:
 def init_db(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
     init_database(db_url)
     _echo_json({"status": "ok", "db_url": db_url})
+
+
+@app.command()
+def register_sources(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        sources = register_official_sources(session)
+        source_ids = [source.source_id for source in sources]
+    _echo_json({"registered_sources": len(source_ids), "source_ids": source_ids})
 
 
 @app.command()
@@ -63,6 +80,78 @@ def ingest_mock(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
     with session_scope(db_url) as session:
         event_ids = ingest_mock_data(session)
     _echo_json({"inserted_events": len(event_ids), "event_ids": event_ids})
+
+
+@app.command()
+def ingest_dart_mock(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = OpenDartCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_ecos_mock(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = EcosCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_fred_mock(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = FredCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_krx_mock(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = KrxCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_news_mock(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = NewsRssCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_official_mock_bundle(
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        results = ingest_bundle(session, fixture_dir)
+    _echo_json(
+        {
+            "total_inserted": sum(result.inserted_count for result in results),
+            "total_skipped": sum(result.skipped_count for result in results),
+            "collectors": [result.model_dump(mode="json") for result in results],
+        }
+    )
 
 
 @app.command()

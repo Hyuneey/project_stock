@@ -72,6 +72,7 @@ class IndicatorObservation(Base):
     value: Mapped[float] = mapped_column(Float, nullable=False)
     unit: Mapped[str | None] = mapped_column(String(80))
     release_at: Mapped[object | None] = mapped_column(DateTime(timezone=True))
+    collected_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     available_from: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     vintage_date: Mapped[str | None] = mapped_column(String(40))
     source_id: Mapped[str | None] = mapped_column(ForeignKey("sources.source_id"))
