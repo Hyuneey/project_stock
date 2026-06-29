@@ -11,12 +11,14 @@ The MVP uses local SQLite for relational state and includes a Parquet-ready
 storage adapter for later market and indicator datasets. The core flow is:
 
 1. Raw source material or mock fixtures are collected.
-2. Rule-based classifiers turn raw inputs into events.
-3. Entity mapping links events to companies, macro factors, and theses.
-4. Scenario triggers compare current metrics with YAML-defined conditions.
-5. Playbooks return allowed and forbidden risk-management actions only.
-6. EvidenceLedger and DecisionLog rows are appended for auditability.
-7. Sentinels render markdown memos for human review.
+2. Rule-based normalizers turn raw inputs into events.
+3. Entity mapping links events to companies, assets, sectors, themes, countries,
+   and macro factors.
+4. Evidence generation links normalized events to theses and scenarios.
+5. Scenario triggers compare current metrics with YAML-defined conditions.
+6. Playbooks return allowed and forbidden risk-management actions only.
+7. EvidenceLedger and DecisionLog rows are appended for auditability.
+8. Sentinels render markdown memos for human review.
 
 ## Install
 
@@ -80,6 +82,24 @@ project-stock detect-market-events --db-url sqlite:///./data/warehouse/project_s
 project-stock normalize-events --db-url sqlite:///./data/warehouse/project_stock.sqlite
 ```
 
+## Evidence Generation Demo
+
+The evidence demo initializes the DB, registers sources, ingests the official
+mock bundle, normalizes events, generates deterministic thesis-linked evidence
+candidates, appends deduplicated EvidenceLedger rows, and prints counts by
+thesis and stance.
+
+```bash
+project-stock run-evidence-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Focused evidence commands are also available:
+
+```bash
+project-stock generate-evidence-candidates --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
 ## CLI Commands
 
 - `project-stock init-db`: creates the SQLite schema.
@@ -97,6 +117,9 @@ project-stock normalize-events --db-url sqlite:///./data/warehouse/project_stock
 - `project-stock normalize-events-from-indicators`: normalizes IndicatorObservation records.
 - `project-stock detect-market-events`: detects market events from MarketTimeSeries records.
 - `project-stock run-event-normalization-demo`: runs the offline ingestion-to-event demo.
+- `project-stock generate-evidence-candidates`: ranks event-to-thesis evidence candidates without appending.
+- `project-stock append-evidence-candidates`: appends deduplicated generated candidates to EvidenceLedger.
+- `project-stock run-evidence-demo`: runs the offline ingestion-to-evidence demo.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -109,6 +132,7 @@ project-stock normalize-events --db-url sqlite:///./data/warehouse/project_stock
 - `playbooks/`: risk-action playbooks; never broker orders.
 - `src/project_stock/db/`: SQLAlchemy models and DB initialization.
 - `src/project_stock/ingest/`: official collector interfaces and mock collectors.
+- `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
 - `tests/fixtures/`: deterministic local fixtures.

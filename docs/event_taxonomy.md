@@ -39,5 +39,24 @@ The MVP uses deterministic dictionaries. Supported entity types are `theme`,
 - `005930`: Samsung Electronics.
 - `000660`: SK Hynix.
 
+## Evidence Mapping Examples
+
+Evidence generation uses the taxonomy and mapped entities to produce
+thesis-linked candidates:
+
+- `earnings_guidance` with positive guidance language for
+  `KOR_SEMI_MEMORY_UPCYCLE` is supportive evidence.
+- `earnings_revision_candidate` with EPS, profit, or guidance deterioration for
+  `KOR_SEMI_MEMORY_UPCYCLE` is contradicting evidence and can link to
+  `KOR_SEMI_EARNINGS_BEAR`.
+- `disclosure_received` without directional language is neutral thesis evidence.
+- `rate_policy_relevant` or `rates_shock_move` is risk-negative for high-duration
+  AI or growth-sensitive theses and can link to `KOR_SEMI_RATE_SHOCK_BEAR`.
+- `fx_stress_move` from a USDKRW spike is contradicting evidence for
+  Korea foreign-flow-sensitive theses.
+- `sector_news_headline` or `sector_relative_strength_move` tied to SOX,
+  semiconductors, HBM, or AI infrastructure can support
+  `KOR_SEMI_AI_DEMAND_BULL` when direction is positive.
+
 Duplicate prevention uses source lineage first, then News/RSS checksum, then a
 close timestamp/entity window for same `event_type` and mapped entity.

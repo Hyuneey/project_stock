@@ -21,6 +21,11 @@ from project_stock.events.normalization import (
     normalize_events_from_indicators as normalize_indicators_flow,
     run_event_normalization_demo as run_event_normalization_demo_flow,
 )
+from project_stock.evidence.generation import (
+    append_evidence_candidates as append_evidence_candidates_flow,
+    generate_evidence_candidates as generate_evidence_candidates_flow,
+    run_evidence_demo as run_evidence_demo_flow,
+)
 from project_stock.ingest.dart import OpenDartCollector
 from project_stock.ingest.ecos import EcosCollector
 from project_stock.ingest.fred import FredCollector
@@ -222,6 +227,53 @@ def run_event_normalization_demo(
     with session_scope(db_url) as session:
         result = run_event_normalization_demo_flow(session, fixture_dir)
     _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def generate_evidence_candidates(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = generate_evidence_candidates_flow(session, thesis_dir, scenario_dir)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def append_evidence_candidates(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        generated = generate_evidence_candidates_flow(session, thesis_dir, scenario_dir)
+        result = append_evidence_candidates_flow(session, generated.candidates)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_evidence_demo(
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = run_evidence_demo_flow(session, fixture_dir, thesis_dir, scenario_dir)
+    _echo_json(
+        {
+            "candidate_count": result.candidate_count,
+            "appended_count": result.appended_count,
+            "skipped_count": result.skipped_count,
+            "counts_by_thesis_id": result.counts_by_thesis_id,
+            "counts_by_stance": result.counts_by_stance,
+            "evidence_ids": result.evidence_ids,
+        }
+    )
 
 
 @app.command()

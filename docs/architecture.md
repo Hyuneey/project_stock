@@ -2,20 +2,22 @@
 
 ## Flow
 
-Raw inputs become events, events become evidence, evidence is matched against
-scenarios, and scenarios produce decision-support logs. The decision log records
-risk-review actions such as `no_new_buy` or `review_partial_derisking`; it never
-records broker orders.
+Raw inputs become normalized events, events become thesis-linked evidence
+candidates, evidence is matched against scenarios, and scenarios produce
+decision-support logs. The decision log records risk-review actions such as
+`no_new_buy` or `review_partial_derisking`; it never records broker orders.
 
 ```mermaid
 flowchart LR
-  A["Source / RawDocument"] --> B["Rule-based Event"]
+  A["Source records"] --> B["Rule-based Event normalization"]
   B --> C["EventEntity mapping"]
-  B --> D["EvidenceLedger append"]
-  B --> E["Scenario matcher"]
-  E --> F["Playbook executor"]
-  F --> G["DecisionLog append"]
-  G --> H["Markdown memo"]
+  C --> D["Thesis relevance engine"]
+  D --> E["EvidenceCandidate scoring"]
+  E --> F["EvidenceLedger append"]
+  B --> G["Scenario matcher"]
+  G --> H["Playbook executor"]
+  H --> I["DecisionLog append"]
+  I --> J["Markdown memo"]
 ```
 
 ## Data Input Layer
@@ -52,6 +54,25 @@ availability time.
 Duplicate prevention happens before inserts. The MVP skips events generated from
 the same source record, skips News/RSS duplicates by checksum, and skips close
 duplicates when the event type, mapped entity, and timestamp window overlap.
+
+## Evidence Generation Layer
+
+The evidence generation layer converts normalized `Event` plus `EventEntity`
+rows into thesis-linked `EvidenceCandidate` records. It is deterministic and
+rule-based:
+
+- Relevance matching compares event entity IDs, entity types, thesis metadata,
+  scenario metadata, keywords, and trigger-related hints.
+- Stance classification returns only `supports`, `contradicts`, or `neutral`.
+- Strength scoring uses bounded event scores, relevance, and event-type severity
+  on a 0 to 5 scale.
+- Scenario linkage attaches `scenario_id` when the event type or trigger-related
+  metadata matches a scenario for the same thesis.
+
+Appending candidates writes new `EvidenceLedger` rows only. Duplicate evidence
+for the same `event_id`, `thesis_id`, `scenario_id`, and `evidence_type` is
+skipped, and metadata records the mapped entities plus relevance reasons. The
+layer does not call LLMs, external APIs, broker systems, or paid services.
 
 ## Daily Sentinel
 
