@@ -16,9 +16,11 @@ flowchart LR
   E --> F["EvidenceLedger append"]
   F --> G["Scenario matcher"]
   F --> H["Thesis lifecycle evaluator"]
+  J --> M["Portfolio exposure review"]
   G --> I["Playbook executor"]
   H --> J["ThesisStateSnapshot append"]
   I --> K["DecisionLog append"]
+  M --> K
   J --> L["Markdown memo"]
   K --> L
 ```
@@ -97,6 +99,19 @@ command.
 `as_of` and identical evidence/scoring fingerprint skips duplicate snapshots
 unless a force flag is used.
 
+## Portfolio Review Layer
+
+The portfolio review layer reads a local holdings fixture and YAML portfolio
+configuration. It calculates deterministic exposure ratios for cash, themes,
+theses, sectors, single assets, high-beta holdings, and foreign currencies.
+
+Portfolio review uses the latest `ThesisStateSnapshot` by thesis ID. It emits
+review flags such as `under_exposed_review`, `reduce_risk_review`,
+`crowding_review`, `over_exposed_review`, `concentration_warning`, and
+`missing_thesis_state_warning`. These are human review prompts only, not orders
+or trade instructions. Each review appends a `portfolio_review` DecisionLog row
+with exposure breakdown and risk flags, then renders a portfolio memo.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
@@ -132,6 +147,10 @@ append-only and can be repeated to show each operational review pass.
 
 The thesis review workflow runs after evidence accumulation and creates
 append-only thesis state recommendations plus a thesis review memo.
+
+The portfolio review workflow can run after thesis review, turning current
+thesis states plus fixture holdings into exposure review flags and a portfolio
+review memo.
 
 ## Scenario Matching
 

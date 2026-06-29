@@ -1,0 +1,32 @@
+portfolio_id: PERSONAL_CORE_SATELLITE
+base_currency: KRW
+review_frequency: monthly
+max_total_equity_exposure: 0.85
+cash_buffer_min: 0.10
+max_theme_exposure:
+  KOR_SEMI_MEMORY_UPCYCLE: 0.25
+  AI_INFRASTRUCTURE: 0.30
+max_single_asset_exposure: 0.15
+risk_budget:
+  max_drawdown_review_threshold: 0.10
+  high_beta_exposure_threshold: 0.40
+  minimal_thesis_exposure_threshold: 0.02
+thesis_exposure_map:
+  KOR_SEMI_MEMORY_UPCYCLE:
+    review_min: 0.08
+    review_max: 0.25
+  AI_INFRASTRUCTURE:
+    review_min: 0.08
+    review_max: 0.30
+asset_theme_map:
+  "005930":
+    - KOR_SEMI_MEMORY_UPCYCLE
+  "000660":
+    - KOR_SEMI_MEMORY_UPCYCLE
+  KODEX_SEMI:
+    - KOR_SEMI_MEMORY_UPCYCLE
+  AI_INFRA_PROXY:
+    - AI_INFRASTRUCTURE
+benchmark_symbols:
+  - KOSPI
+  - SOX
