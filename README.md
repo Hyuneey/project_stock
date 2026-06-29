@@ -1,0 +1,75 @@
+# project-stock
+
+`project-stock` is an MVP scaffold for a macro-thematic flow investment
+decision-support system. It tracks thesis definitions, scenarios, evidence, and
+risk-review decisions. It is not an auto-trading system: there is no broker
+integration, no order execution, and no LLM-directed buy/sell decision path.
+
+## Architecture Overview
+
+The MVP uses local SQLite for relational state and includes a Parquet-ready
+storage adapter for later market and indicator datasets. The core flow is:
+
+1. Raw source material or mock fixtures are collected.
+2. Rule-based classifiers turn raw inputs into events.
+3. Entity mapping links events to companies, macro factors, and theses.
+4. Scenario triggers compare current metrics with YAML-defined conditions.
+5. Playbooks return allowed and forbidden risk-management actions only.
+6. EvidenceLedger and DecisionLog rows are appended for auditability.
+7. Sentinels render markdown memos for human review.
+
+## Install
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+API keys are optional and are not required for tests or the local demo.
+
+## 5-Minute Local Demo
+
+```bash
+project-stock init-db --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock load-yaml --thesis-dir thesis --scenario-dir scenarios --playbook-dir playbooks
+project-stock ingest-mock --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock run-daily --as-of 2026-06-29 --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock run-emergency --fixture tests/fixtures/emergency_rate_shock.json --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock score-big-flow --fixture tests/fixtures/big_flow_kor_semi.json
+```
+
+The emergency fixture returns a rate-shock scenario match, risk actions,
+forbidden actions, and appends EvidenceLedger and DecisionLog records. The daily
+run writes a markdown memo under `data/processed/`.
+
+## CLI Commands
+
+- `project-stock init-db`: creates the SQLite schema.
+- `project-stock load-yaml`: validates thesis, scenario, and playbook YAML.
+- `project-stock ingest-mock`: inserts deterministic mock raw documents and events.
+- `project-stock classify-events`: classifies raw documents into events.
+- `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
+- `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
+- `project-stock score-big-flow`: scores a thesis from a JSON fixture.
+
+## Directory Structure
+
+- `thesis/`: versioned thesis definitions.
+- `scenarios/`: triggerable scenario definitions.
+- `playbooks/`: risk-action playbooks; never broker orders.
+- `src/project_stock/db/`: SQLAlchemy models and DB initialization.
+- `src/project_stock/sentinel/`: daily and intraday sentinel flows.
+- `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
+- `tests/fixtures/`: deterministic local fixtures.
+
+## Development Principles
+
+- Keep `available_from`, `published_at`, `release_at`, and `event_time` explicit.
+- Treat EvidenceLedger and DecisionLog as append-only audit records.
+- Do not add broker execution, order routing, or LLM-based trade decisions.
+- Keep tests deterministic and offline.
+
+## Validation
+
+```bash
+pytest
+```
