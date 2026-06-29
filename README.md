@@ -59,6 +59,20 @@ Both commands write markdown memos under `data/processed/` unless `--memo-dir`
 is provided. Repeated runs skip duplicate source records, events, and evidence,
 while appending a fresh DecisionLog row for the operational review.
 
+## Thesis Lifecycle Demo
+
+The thesis lifecycle demo converts accumulated EvidenceLedger rows into
+append-only ThesisStateSnapshot recommendations and a thesis review memo.
+
+```bash
+project-stock run-thesis-review-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock evaluate-thesis-states --as-of 2026-06-29 --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock archive-thesis --thesis-id KOR_SEMI_MEMORY_UPCYCLE --as-of 2026-06-29 --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Lifecycle states are review recommendations only. They do not authorize broker
+orders, auto-trading, or LLM-directed buy/sell decisions.
+
 ## Official Data Mock Demo
 
 These commands register official source metadata and ingest one deterministic
@@ -138,6 +152,9 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock run-evidence-demo`: runs the offline ingestion-to-evidence demo.
 - `project-stock run-daily-review-loop`: runs the full offline daily operational review loop.
 - `project-stock run-intraday-review-loop`: runs the full emergency operational review loop.
+- `project-stock evaluate-thesis-states`: appends deduplicated thesis state snapshots from evidence.
+- `project-stock run-thesis-review-demo`: runs the offline ingestion-to-thesis-review demo.
+- `project-stock archive-thesis`: appends an explicit archived thesis snapshot.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -152,6 +169,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `src/project_stock/ingest/`: official collector interfaces and mock collectors.
 - `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
 - `src/project_stock/operations/`: daily and intraday operational review loops.
+- `src/project_stock/thesis/`: thesis loading and lifecycle state evaluation.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
 - `tests/fixtures/`: deterministic local fixtures.

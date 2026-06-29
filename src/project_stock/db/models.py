@@ -190,6 +190,6 @@ def _raise_append_only_delete(mapper: object, connection: object, target: object
     raise RuntimeError(f"{target.__class__.__name__} is append-only and cannot be deleted.")
 
 
-for _append_only_model in (EvidenceLedger, DecisionLog):
+for _append_only_model in (EvidenceLedger, DecisionLog, ThesisStateSnapshot):
     sqlalchemy_event.listen(_append_only_model, "before_update", _raise_append_only_update)
     sqlalchemy_event.listen(_append_only_model, "before_delete", _raise_append_only_delete)

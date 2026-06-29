@@ -43,6 +43,11 @@ from project_stock.schemas.scoring import BigFlowScoreInput
 from project_stock.sentinel.daily import run_daily_sentinel
 from project_stock.sentinel.intraday import run_intraday_emergency_check
 from project_stock.storage.repository import Repository
+from project_stock.thesis.lifecycle import (
+    archive_thesis as archive_thesis_flow,
+    evaluate_thesis_states as evaluate_thesis_states_flow,
+    run_thesis_review_demo as run_thesis_review_demo_flow,
+)
 from project_stock.thesis.loader import load_thesis_dir
 from project_stock.scenarios.loader import load_scenario_dir
 from project_stock.playbooks.loader import load_playbook_dir
@@ -327,6 +332,72 @@ def run_intraday_review_loop(
             scenario_dir=scenario_dir,
             playbook_dir=playbook_dir,
             memo_dir=memo_dir,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def evaluate_thesis_states(
+    as_of: str = typer.Option(..., "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    lookback_days: int | None = typer.Option(None, "--lookback-days"),
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = evaluate_thesis_states_flow(
+            session=session,
+            as_of=date.fromisoformat(as_of),
+            thesis_dir=thesis_dir,
+            lookback_days=lookback_days,
+            memo_dir=memo_dir,
+            force=force,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_thesis_review_demo(
+    as_of: str = typer.Option("2026-06-29", "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = run_thesis_review_demo_flow(
+            session=session,
+            as_of=date.fromisoformat(as_of),
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            fixture_dir=fixture_dir,
+            memo_dir=memo_dir,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def archive_thesis(
+    thesis_id: str = typer.Option(..., "--thesis-id"),
+    as_of: str = typer.Option(..., "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    reason: str = typer.Option("Explicit archive command.", "--reason"),
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = archive_thesis_flow(
+            session=session,
+            thesis_id=thesis_id,
+            as_of=date.fromisoformat(as_of),
+            thesis_dir=thesis_dir,
+            reason=reason,
+            force=force,
         )
     _echo_json(result.model_dump(mode="json"))
 

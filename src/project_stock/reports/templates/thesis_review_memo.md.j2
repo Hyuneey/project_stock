@@ -1,0 +1,64 @@
+# Thesis Review Memo
+
+Date: {{ as_of }}
+
+{{ disclaimer }}
+
+## Thesis States
+
+| Thesis | Previous | Proposed | Confidence | Support | Contradiction | Neutral | Net | Risk |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+{% for evaluation in evaluations %}
+| {{ evaluation.thesis_id }} | {{ evaluation.previous_state.value if evaluation.previous_state else "none" }} | {{ evaluation.proposed_state.value }} | {{ evaluation.confidence_score }} | {{ evaluation.support_score }} | {{ evaluation.contradiction_score }} | {{ evaluation.neutral_score }} | {{ evaluation.net_evidence_score }} | {{ evaluation.risk_score }} |
+{% endfor %}
+
+## Proposed Transitions
+
+{% for transition in transitions %}
+- {{ transition.thesis_id }}: {{ transition.previous_state.value if transition.previous_state else "none" }} -> {{ transition.proposed_state.value }}; {{ transition.reason }}
+{% endfor %}
+
+## Top Supporting Evidence
+
+{% for evaluation in evaluations %}
+### {{ evaluation.thesis_id }}
+{% if evaluation.top_supporting_evidence %}
+{% for evidence in evaluation.top_supporting_evidence %}
+- {{ evidence.evidence_id }}: {{ evidence.claim }} (strength {{ evidence.strength_score }})
+{% endfor %}
+{% else %}
+- No supporting evidence.
+{% endif %}
+{% endfor %}
+
+## Top Contradicting Evidence
+
+{% for evaluation in evaluations %}
+### {{ evaluation.thesis_id }}
+{% if evaluation.top_contradicting_evidence %}
+{% for evidence in evaluation.top_contradicting_evidence %}
+- {{ evidence.evidence_id }}: {{ evidence.claim }} (strength {{ evidence.strength_score }})
+{% endfor %}
+{% else %}
+- No contradicting evidence.
+{% endif %}
+{% endfor %}
+
+## Invalidation Warnings
+
+{% for evaluation in evaluations %}
+### {{ evaluation.thesis_id }}
+{% if evaluation.invalidation_warnings %}
+{% for warning in evaluation.invalidation_warnings %}
+- {{ warning }}
+{% endfor %}
+{% else %}
+- No invalidation warnings.
+{% endif %}
+{% endfor %}
+
+## Recommended Human Review Actions
+
+{% for evaluation in evaluations %}
+- {{ evaluation.thesis_id }}: {{ evaluation.recommended_review_action }}
+{% endfor %}
