@@ -1,0 +1,30 @@
+{
+  "event_input": {
+    "title": "Fed rate shock pressures Korean semiconductor shares",
+    "body_text": "US2Y yield jumps 20 bp, USDKRW rises, and SOX falls sharply. Semiconductor beta is under pressure.",
+    "event_time": "2026-06-29T01:00:00+00:00",
+    "source_reliability": 4.0,
+    "surprise_score": 4.5,
+    "persistence_score": 3.5,
+    "market_confirmation_score": 4.0
+  },
+  "metrics": {
+    "US2Y_YIELD_CHANGE_1D_BP": 20,
+    "DXY_CHANGE_1D_PCT": 0.8,
+    "USDKRW_CHANGE_1D_PCT": 1.2,
+    "SOX_CHANGE_1D_PCT": -3.1,
+    "VIX_CHANGE_1D_PCT": 8.0
+  },
+  "exposure_context": {
+    "source_reliability": 4.0,
+    "relevance": 4.0,
+    "surprise": 3.4,
+    "transmission": 3.0,
+    "market_confirmation": 3.0,
+    "exposure": 3.0,
+    "confirmations": [
+      "rates_move_confirmed",
+      "usd_move_confirmed"
+    ]
+  }
+}
