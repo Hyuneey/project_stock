@@ -1,0 +1,38 @@
+# Daily Risk Memo - {{ as_of }}
+
+## Event Summary
+{% for event in events %}
+- {{ event.event_time }} | {{ event.event_type }} | {{ event.summary }}
+{% else %}
+- No events recorded.
+{% endfor %}
+
+## Emergency Levels
+{{ emergency_levels }}
+
+## Triggered Scenarios
+{% for scenario in triggered_scenarios %}
+- {{ scenario }}
+{% else %}
+- None.
+{% endfor %}
+
+## Risk Actions
+Allowed:
+{% for action in allowed_actions %}
+- {{ action }}
+{% else %}
+- None.
+{% endfor %}
+
+Forbidden:
+{% for action in forbidden_actions %}
+- {{ action }}
+{% else %}
+- None.
+{% endfor %}
+
+## Ledger
+Evidence IDs: {{ evidence_ids | join(", ") }}
+
+Decision IDs: {{ decision_ids | join(", ") }}

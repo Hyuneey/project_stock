@@ -1,0 +1,12 @@
+# Monthly Big Flow Memo - {{ as_of }}
+
+## Thesis Scores
+{% for score in scores %}
+- {{ score.thesis_id }}: {{ score.score }} ({{ score.state_hint }})
+{% else %}
+- Monthly aggregation placeholder for MVP.
+{% endfor %}
+
+## Notes
+This memo is a reporting aid. It does not create broker orders or authorize
+LLM-directed buy/sell decisions.
