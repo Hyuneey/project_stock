@@ -1,0 +1,73 @@
+# Daily Review Memo
+
+Date: {{ as_of }}
+
+{{ disclaimer }}
+
+## New Events by Type
+
+{% if new_events_by_type %}
+{% for event_type, count in new_events_by_type.items() %}
+- {{ event_type }}: {{ count }}
+{% endfor %}
+{% else %}
+- No newly normalized events.
+{% endif %}
+
+## All Events by Type
+
+{% if all_events_by_type %}
+{% for event_type, count in all_events_by_type.items() %}
+- {{ event_type }}: {{ count }}
+{% endfor %}
+{% else %}
+- No events recorded.
+{% endif %}
+
+## Evidence by Thesis
+
+{% if evidence_counts_by_thesis %}
+{% for thesis_id, count in evidence_counts_by_thesis.items() %}
+- {{ thesis_id }}: {{ count }}
+{% endfor %}
+{% else %}
+- No thesis-linked evidence candidates generated.
+{% endif %}
+
+## Evidence Stance Counts
+
+{% if evidence_counts_by_stance %}
+{% for stance, count in evidence_counts_by_stance.items() %}
+- {{ stance }}: {{ count }}
+{% endfor %}
+{% else %}
+- No stance counts available.
+{% endif %}
+
+## Matched Scenarios
+
+{% if matched_scenarios %}
+{% for scenario in matched_scenarios %}
+- {{ scenario.scenario_id }} ({{ scenario.thesis_id }}): score {{ scenario.match_score }}
+{% endfor %}
+{% else %}
+- No scenarios matched.
+{% endif %}
+
+## Recommended Human Review Items
+
+{% for item in recommended_review_items %}
+- {{ item }}
+{% endfor %}
+
+## Playbook Status
+
+{% if playbook_results %}
+{% for playbook in playbook_results %}
+- {{ playbook.playbook_id }}: {{ "activated" if playbook.activated else "not activated" }}
+{% endfor %}
+{% else %}
+- No playbooks evaluated.
+{% endif %}
+
+Decision log: {{ decision_id }}

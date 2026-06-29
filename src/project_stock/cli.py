@@ -34,6 +34,10 @@ from project_stock.ingest.mock import ingest_mock_data
 from project_stock.ingest.news import NewsRssCollector
 from project_stock.ingest.official_bundle import ingest_official_mock_bundle as ingest_bundle
 from project_stock.ingest.sources import register_official_sources
+from project_stock.operations.review_loop import (
+    run_daily_review_loop as run_daily_review_loop_flow,
+    run_intraday_review_loop as run_intraday_review_loop_flow,
+)
 from project_stock.scoring.big_flow import score_big_flow as compute_big_flow_score
 from project_stock.schemas.scoring import BigFlowScoreInput
 from project_stock.sentinel.daily import run_daily_sentinel
@@ -274,6 +278,57 @@ def run_evidence_demo(
             "evidence_ids": result.evidence_ids,
         }
     )
+
+
+@app.command()
+def run_daily_review_loop(
+    as_of: str = typer.Option(..., "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    ingest_mock_bundle: bool = typer.Option(False, "--ingest-mock-bundle"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+    playbook_dir: Path = typer.Option(Path("playbooks"), "--playbook-dir"),
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = run_daily_review_loop_flow(
+            as_of=date.fromisoformat(as_of),
+            db_session=session,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            playbook_dir=playbook_dir,
+            fixture_dir=fixture_dir,
+            memo_dir=memo_dir,
+            ingest_mock=ingest_mock_bundle,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_intraday_review_loop(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+    playbook_dir: Path = typer.Option(Path("playbooks"), "--playbook-dir"),
+) -> None:
+    init_database(db_url)
+    payload = json.loads(fixture.read_text(encoding="utf-8"))
+    with session_scope(db_url) as session:
+        result = run_intraday_review_loop_flow(
+            event_input=payload["event_input"],
+            metrics=payload["metrics"],
+            exposure_context=payload["exposure_context"],
+            db_session=session,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            playbook_dir=playbook_dir,
+            memo_dir=memo_dir,
+        )
+    _echo_json(result.model_dump(mode="json"))
 
 
 @app.command()

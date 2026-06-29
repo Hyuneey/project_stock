@@ -43,6 +43,22 @@ The emergency fixture returns a rate-shock scenario match, risk actions,
 forbidden actions, and appends EvidenceLedger and DecisionLog records. The daily
 run writes a markdown memo under `data/processed/`.
 
+## Operational Review Loop Demo
+
+The operational loop connects mock ingestion, event normalization, evidence
+generation, scenario matching, playbook checks, decision logging, and memo
+rendering. It remains review-only: no broker execution, no auto-trading, and no
+LLM-directed buy/sell decisions.
+
+```bash
+project-stock run-daily-review-loop --as-of 2026-06-29 --ingest-mock-bundle --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock run-intraday-review-loop --fixture tests/fixtures/emergency_rate_shock.json --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Both commands write markdown memos under `data/processed/` unless `--memo-dir`
+is provided. Repeated runs skip duplicate source records, events, and evidence,
+while appending a fresh DecisionLog row for the operational review.
+
 ## Official Data Mock Demo
 
 These commands register official source metadata and ingest one deterministic
@@ -120,6 +136,8 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock generate-evidence-candidates`: ranks event-to-thesis evidence candidates without appending.
 - `project-stock append-evidence-candidates`: appends deduplicated generated candidates to EvidenceLedger.
 - `project-stock run-evidence-demo`: runs the offline ingestion-to-evidence demo.
+- `project-stock run-daily-review-loop`: runs the full offline daily operational review loop.
+- `project-stock run-intraday-review-loop`: runs the full emergency operational review loop.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -133,6 +151,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `src/project_stock/db/`: SQLAlchemy models and DB initialization.
 - `src/project_stock/ingest/`: official collector interfaces and mock collectors.
 - `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
+- `src/project_stock/operations/`: daily and intraday operational review loops.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
 - `tests/fixtures/`: deterministic local fixtures.

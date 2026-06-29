@@ -1,0 +1,52 @@
+# Emergency Review Memo
+
+Event: {{ event.summary }}
+
+{{ disclaimer }}
+
+## Emergency Impact
+
+- EIS: {{ emergency_score.eis }}
+- Level: {{ emergency_score.emergency_level.value }}
+- Close review required: {{ requires_close_review }}
+
+## Matched Scenarios
+
+{% if matched_scenarios %}
+{% for scenario in matched_scenarios %}
+- {{ scenario.scenario_id }} ({{ scenario.thesis_id }}): score {{ scenario.match_score }}
+{% endfor %}
+{% else %}
+- No scenarios matched.
+{% endif %}
+
+## Affected Theses
+
+{% if affected_theses %}
+{% for thesis_id in affected_theses %}
+- {{ thesis_id }}
+{% endfor %}
+{% else %}
+- No thesis linkage detected.
+{% endif %}
+
+## Evidence Generated
+
+- Appended evidence rows: {{ appended_evidence_count }}
+- Duplicate evidence skipped: {{ skipped_duplicate_evidence_count }}
+
+## Allowed Risk Actions
+
+{% for action in allowed_actions %}
+- {{ action }}
+{% endfor %}
+
+## Forbidden Actions
+
+{% for action in forbidden_actions %}
+- {{ action }}
+{% endfor %}
+
+Close-review requirement: review at the next close before any portfolio action.
+
+Decision log: {{ decision_id }}
