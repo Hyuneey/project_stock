@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from project_stock.db.base import Base
@@ -177,3 +178,16 @@ class ScenarioTriggerLog(Base):
     result_state: Mapped[str] = mapped_column(String(80), nullable=False)
     metadata_json: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+def _raise_append_only_update(mapper: object, connection: object, target: object) -> None:
+    raise RuntimeError(f"{target.__class__.__name__} is append-only and cannot be updated.")
+
+
+def _raise_append_only_delete(mapper: object, connection: object, target: object) -> None:
+    raise RuntimeError(f"{target.__class__.__name__} is append-only and cannot be deleted.")
+
+
+for _append_only_model in (EvidenceLedger, DecisionLog):
+    sqlalchemy_event.listen(_append_only_model, "before_update", _raise_append_only_update)
+    sqlalchemy_event.listen(_append_only_model, "before_delete", _raise_append_only_delete)
