@@ -1,0 +1,40 @@
+scenario_id: KOR_SEMI_RATE_SHOCK_BEAR
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "1.0"
+status: active
+scenario_type: shock
+horizon: "1 week to 3 months"
+description: >
+  A sharp rates and dollar shock compresses growth multiples and foreign flows
+  for Korean semiconductor exposure.
+trigger:
+  any_of:
+    - metric: US2Y_YIELD_CHANGE_1D_BP
+      operator: ">"
+      value: 15
+    - metric: DXY_CHANGE_1D_PCT
+      operator: ">"
+      value: 1.0
+    - metric: USDKRW_CHANGE_1D_PCT
+      operator: ">"
+      value: 1.0
+    - metric: SOX_CHANGE_1D_PCT
+      operator: "<"
+      value: -2.5
+expected_path:
+  T0: Growth and semiconductor beta derate.
+  T1_to_T5: Confirm rates and foreign exchange transmission.
+  T5_to_T20: Watch EPS revisions and relative strength.
+risk_action:
+  - no_new_buy
+  - review_high_beta_reduction
+  - evaluate_fx_sensitivity
+thesis_action:
+  default: watch
+  invalidate_if:
+    - EPS revisions turn negative.
+    - Relative strength trend breaks.
+    - Foreign selling persists.
+expiry:
+  valid_until: "2026-09-30"
+  review_frequency: weekly

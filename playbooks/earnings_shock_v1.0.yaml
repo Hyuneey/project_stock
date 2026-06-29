@@ -1,0 +1,18 @@
+playbook_id: PB_EARNINGS_SHOCK_001
+version: "1.0"
+linked_scenarios:
+  - KOR_SEMI_EARNINGS_BEAR
+activation:
+  emergency_level_min: E2
+  required_confirmation:
+    - guidance_confirmed
+allowed_actions:
+  - no_new_buy
+  - review_earnings_sensitivity
+forbidden_actions:
+  - unverified_rumor_trade
+  - llm_direct_trade_decision
+cooldown:
+  min_review_interval: "1 reporting cycle"
+  reentry_requires:
+    - analyst_revision_stabilization

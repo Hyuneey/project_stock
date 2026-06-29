@@ -1,0 +1,35 @@
+thesis_id: AI_INFRASTRUCTURE
+version: "1.0"
+status: watch
+title: AI infrastructure buildout
+created_at: "2026-06-29"
+last_reviewed_at: "2026-06-29"
+time_horizon:
+  investment: "6 to 24 months"
+  structural: "3 to 5 years"
+core_claim: >
+  Data center compute, networking, power, and memory demand can create sustained
+  infrastructure spending, but valuation and rate sensitivity require close
+  monitoring.
+beneficiaries:
+  primary:
+    - AI compute suppliers
+    - Memory suppliers
+  secondary:
+    - Power infrastructure
+    - Cooling infrastructure
+core_assumptions:
+  - id: A1
+    statement: Cloud AI capex remains high.
+  - id: A2
+    statement: Supply constraints preserve pricing power.
+  - id: A3
+    statement: End demand monetization remains credible.
+invalidation_conditions:
+  - AI capex guidance declines.
+  - Utilization data weakens.
+  - Funding conditions tighten abruptly.
+state_history:
+  - date: "2026-06-29"
+    state: watch
+    reason: Companion thesis for cross-theme entity mapping.

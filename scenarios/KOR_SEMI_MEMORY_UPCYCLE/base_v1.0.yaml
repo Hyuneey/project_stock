@@ -1,0 +1,28 @@
+scenario_id: KOR_SEMI_GRINDING_BASE
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "1.0"
+status: active
+scenario_type: base
+horizon: "1 month to 6 months"
+description: >
+  Memory fundamentals improve gradually while rates and valuation remain manageable.
+trigger:
+  any_of:
+    - metric: MEMORY_INVENTORY_DAYS
+      operator: "<="
+      value: 60
+    - metric: EPS_REVISION_1M_PCT
+      operator: ">="
+      value: 0
+    - metric: US2Y_YIELD_CHANGE_1D_BP
+      operator: "<="
+      value: 10
+expected_path:
+  T0: Continue monitoring evidence without thesis state escalation.
+risk_action:
+  - maintain_risk_limits
+thesis_action:
+  default: active
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: monthly
