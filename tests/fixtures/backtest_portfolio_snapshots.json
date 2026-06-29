@@ -1,0 +1,15 @@
+[
+  {
+    "snapshot_id": "BTPORT_20260131",
+    "date": "2026-01-31",
+    "available_from": "2026-01-31",
+    "cash_symbol": "CASH_KRW",
+    "exposures": {
+      "005930": 0.20,
+      "000660": 0.18,
+      "KODEX_SEMI": 0.17,
+      "AI_INFRA_PROXY": 0.15,
+      "CASH_KRW": 0.30
+    }
+  }
+]

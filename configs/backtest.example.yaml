@@ -1,0 +1,30 @@
+backtest_id: MVP_FIXTURE_BACKTEST
+start_date: 2026-01-31
+end_date: 2026-06-30
+base_currency: KRW
+benchmark_symbol: KOSPI_BENCHMARK
+rebalance_frequency: monthly
+transaction_cost_bps: 10
+slippage_bps: 5
+max_turnover_per_period: 0.20
+policy_name: thesis_state_risk_overlay
+no_auto_trade: true
+policy:
+  policy_name: thesis_state_risk_overlay
+  cash_symbol: CASH_KRW
+  thesis_symbol_map:
+    KOR_SEMI_MEMORY_UPCYCLE:
+      - "005930"
+      - "000660"
+      - KODEX_SEMI
+    AI_INFRASTRUCTURE:
+      - AI_INFRA_PROXY
+  risk_reduction_fraction: 0.50
+  portfolio_flag_reduction_fraction: 0.35
+  allow_simulated_overweight: false
+  simulated_overweight_fraction: 0.0
+  review_flag_types:
+    - over_exposed_review
+    - reduce_risk_review
+    - crowding_review
+    - concentration_warning

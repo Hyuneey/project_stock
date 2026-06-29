@@ -1,0 +1,65 @@
+# Backtest Validation Report
+
+Backtest ID: {{ result.backtest_id }}
+Period: {{ result.period.start_date }} to {{ result.period.end_date }}
+Policy tested: {{ result.policy_name }}
+Benchmark: {{ result.benchmark_symbol }}
+
+{{ disclaimer }}
+
+## Return And Risk Metrics
+
+| Metric | Value |
+| --- | ---: |
+| Cumulative return | {{ "%.4f"|format(result.metrics.cumulative_return) }} |
+| Annualized return | {{ "%.4f"|format(result.metrics.annualized_return) }} |
+| Volatility | {{ "%.4f"|format(result.metrics.volatility) }} |
+| Max drawdown | {{ "%.4f"|format(result.metrics.max_drawdown) }} |
+| Calmar ratio | {{ result.metrics.calmar_ratio if result.metrics.calmar_ratio is not none else "n/a" }} |
+| Benchmark cumulative return | {{ "%.4f"|format(result.metrics.benchmark_cumulative_return) }} |
+| Benchmark relative return | {{ "%.4f"|format(result.metrics.benchmark_relative_return) }} |
+| Downside capture | {{ result.metrics.downside_capture if result.metrics.downside_capture is not none else "n/a" }} |
+
+## Cost And Turnover
+
+| Metric | Value |
+| --- | ---: |
+| Average turnover | {{ "%.4f"|format(result.metrics.average_turnover) }} |
+| Transaction cost impact | {{ "%.4f"|format(result.metrics.transaction_cost_impact) }} |
+
+## Diagnostic Validation Metrics
+
+| Metric | Value |
+| --- | ---: |
+{% for metric, value in result.validation_metrics.items() %}
+| {{ metric }} | {{ "%.4f"|format(value) }} |
+{% endfor %}
+
+## Point-In-Time Warnings
+
+{% if result.point_in_time_warnings %}
+{% for warning in result.point_in_time_warnings %}
+- {{ warning }}
+{% endfor %}
+{% else %}
+- None.
+{% endif %}
+
+## Hypothetical Simulation Records
+
+{% if result.trade_records %}
+| Date | Symbol | Previous | Target | Change | Reason |
+| --- | --- | ---: | ---: | ---: | --- |
+{% for record in result.trade_records %}
+| {{ record.date }} | {{ record.symbol }} | {{ "%.4f"|format(record.previous_exposure) }} | {{ "%.4f"|format(record.target_exposure) }} | {{ "%.4f"|format(record.exposure_change) }} | {{ record.policy_reason }} |
+{% endfor %}
+{% else %}
+No hypothetical exposure changes were generated.
+{% endif %}
+
+## Limitations
+
+- Fixture returns are deterministic and small; they are diagnostic inputs, not proof of profitability.
+- Signal usefulness metrics check follow-through in fixture data only.
+- A signal can affect simulation only when `available_from` is on or before the decision date.
+- The policy output is a review simulation and must not be interpreted as live trading advice.

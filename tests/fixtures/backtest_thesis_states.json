@@ -1,0 +1,38 @@
+[
+  {
+    "signal_id": "TS_KOR_ACTIVE_20260131",
+    "signal_date": "2026-01-31",
+    "available_from": "2026-01-31",
+    "signal_type": "thesis_state",
+    "thesis_id": "KOR_SEMI_MEMORY_UPCYCLE",
+    "state": "active",
+    "confidence_score": 0.72
+  },
+  {
+    "signal_id": "TS_AI_ACTIVE_20260131",
+    "signal_date": "2026-01-31",
+    "available_from": "2026-01-31",
+    "signal_type": "thesis_state",
+    "thesis_id": "AI_INFRASTRUCTURE",
+    "state": "active",
+    "confidence_score": 0.68
+  },
+  {
+    "signal_id": "TS_KOR_DETERIORATING_20260430",
+    "signal_date": "2026-04-30",
+    "available_from": "2026-04-30",
+    "signal_type": "thesis_state",
+    "thesis_id": "KOR_SEMI_MEMORY_UPCYCLE",
+    "state": "deteriorating",
+    "confidence_score": 0.81
+  },
+  {
+    "signal_id": "TS_AI_ACTIVE_20260531",
+    "signal_date": "2026-05-31",
+    "available_from": "2026-05-31",
+    "signal_type": "thesis_state",
+    "thesis_id": "AI_INFRASTRUCTURE",
+    "state": "active",
+    "confidence_score": 0.66
+  }
+]

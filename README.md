@@ -19,6 +19,8 @@ storage adapter for later market and indicator datasets. The core flow is:
 6. Playbooks return allowed and forbidden risk-management actions only.
 7. EvidenceLedger and DecisionLog rows are appended for auditability.
 8. Sentinels render markdown memos for human review.
+9. Offline validation replays fixture returns to diagnose thesis states,
+   scenario signals, and portfolio review flags.
 
 ## Install
 
@@ -86,6 +88,23 @@ project-stock review-portfolio --portfolio-fixture tests/fixtures/portfolio_hold
 
 Portfolio outputs are review flags only. They are not broker orders or trade
 instructions.
+
+## Backtest Validation Demo
+
+The backtest demo loads deterministic fixture returns, point-in-time thesis
+state signals, portfolio review flags, and a starting exposure snapshot. It
+runs a review-only simulation policy, compares it with the benchmark, computes
+diagnostic validation metrics, and renders a markdown report.
+
+```bash
+project-stock run-backtest-demo --memo-dir data/processed
+project-stock validate-signals --thesis-states tests/fixtures/backtest_thesis_states.json --portfolio-flags tests/fixtures/backtest_portfolio_flags.json
+project-stock render-backtest-report --memo-dir data/processed
+```
+
+Backtest policies produce hypothetical exposure-change records for validation
+only. They do not create broker orders, live trading instructions, or
+LLM-directed buy/sell decisions.
 
 ## Official Data Mock Demo
 
@@ -171,6 +190,9 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock archive-thesis`: appends an explicit archived thesis snapshot.
 - `project-stock review-portfolio`: reviews a portfolio fixture against config and thesis states.
 - `project-stock run-portfolio-review-demo`: runs thesis review and portfolio review end to end.
+- `project-stock run-backtest-demo`: runs the offline fixture-based validation demo.
+- `project-stock validate-signals`: checks signal `available_from` point-in-time safety.
+- `project-stock render-backtest-report`: renders the backtest validation report.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -186,6 +208,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
 - `src/project_stock/operations/`: daily and intraday operational review loops.
 - `src/project_stock/portfolio/`: portfolio exposure and thesis-state-aware review.
+- `src/project_stock/backtest/`: offline deterministic review-simulation validation.
 - `src/project_stock/thesis/`: thesis loading and lifecycle state evaluation.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.
