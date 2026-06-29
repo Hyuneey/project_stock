@@ -1,0 +1,6 @@
+large_move_pct: 2.5
+fx_stress_pct: 1.0
+rates_shock_abs: 0.15
+sector_relative_strength_pct: 2.5
+volatility_shock_pct: 8.0
+close_duplicate_window_minutes: 60

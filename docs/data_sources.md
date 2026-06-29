@@ -34,6 +34,15 @@ dedupes by checksum. News reliability is lower by default because source quality
 publisher identity, and syndication duplication require additional controls
 before real ingestion.
 
+## Event Normalization
+
+Collected records are normalized into `Event` and `EventEntity` rows after
+ingestion. OpenDART and News/RSS records normalize from `RawDocument`; ECOS and
+FRED records normalize from `IndicatorObservation`; KRX records normalize from
+`MarketTimeSeries` when a previous observation exists for move detection. The
+normalization layer preserves source lineage in event metadata and carries
+forward safe `available_from` timestamps.
+
 ## Guardrails
 
 Collectors prepare data for decision support only. They do not execute broker

@@ -22,6 +22,11 @@ class FredIndicatorRecord(SchemaBase):
     collected_at: datetime | None = None
     available_from: datetime | None = None
     vintage_date: str | None = None
+    consensus: float | None = None
+    previous: float | None = None
+    revised_previous: float | None = None
+    surprise_value: float | None = None
+    surprise_z: float | None = None
     source_id: str = "FRED"
 
 
@@ -52,6 +57,11 @@ class FredCollector(OfficialCollector[FredIndicatorRecord, IndicatorObservationC
                         collected_at,
                     ),
                     vintage_date=record.vintage_date,
+                    consensus=record.consensus,
+                    previous=record.previous,
+                    revised_previous=record.revised_previous,
+                    surprise_value=record.surprise_value,
+                    surprise_z=record.surprise_z,
                     metadata_json={"vintage_support": "alfred_ready"},
                 )
             )

@@ -1,0 +1,26 @@
+{
+  "records": [
+    {
+      "symbol": "005930",
+      "timestamp": "2026-06-28T06:30:00+00:00",
+      "frequency": "1d",
+      "close": 70000,
+      "volume": 10000000,
+      "value": 700000000000,
+      "adjusted_flag": false,
+      "collected_at": "2026-06-28T07:00:00+00:00",
+      "available_from": "2026-06-28T07:00:00+00:00"
+    },
+    {
+      "symbol": "005930",
+      "timestamp": "2026-06-29T06:30:00+00:00",
+      "frequency": "1d",
+      "close": 73500,
+      "volume": 13000000,
+      "value": 955500000000,
+      "adjusted_flag": false,
+      "collected_at": "2026-06-29T07:00:00+00:00",
+      "available_from": "2026-06-29T07:00:00+00:00"
+    }
+  ]
+}

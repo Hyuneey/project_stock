@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from project_stock.db.models import (
@@ -162,6 +163,11 @@ class Repository:
             event_type=event_create.event_type,
             event_time=event_create.event_time,
             first_seen_at=event_create.first_seen_at or utc_now(),
+            available_from=safe_available_from(
+                event_create.available_from,
+                event_create.event_time,
+                event_create.first_seen_at,
+            ),
             summary=event_create.summary,
             source_reliability=event_create.source_reliability,
             surprise_score=event_create.surprise_score,
@@ -248,6 +254,29 @@ class Repository:
 
     def list_events(self) -> list[Event]:
         return list(self.session.scalars(select(Event).order_by(Event.event_time)).all())
+
+    def list_events_with_entities(self) -> list[Event]:
+        return list(
+            self.session.scalars(
+                select(Event).options(selectinload(Event.entities)).order_by(Event.event_time)
+            ).all()
+        )
+
+    def find_event_by_source_record(
+        self,
+        source_table: str,
+        source_record_id: str,
+        event_type: str | None = None,
+    ) -> Event | None:
+        for event in self.list_events():
+            metadata = event.metadata_json or {}
+            if (
+                metadata.get("source_table") == source_table
+                and metadata.get("source_record_id") == source_record_id
+                and (event_type is None or event.event_type == event_type)
+            ):
+                return event
+        return None
 
     def list_evidence(self) -> list[EvidenceLedger]:
         return list(

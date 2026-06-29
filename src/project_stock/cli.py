@@ -14,6 +14,13 @@ from project_stock.db.models import RawDocument
 from project_stock.db.session import session_scope
 from project_stock.events.classifier import event_from_document
 from project_stock.events.mapper import map_entities
+from project_stock.events.normalization import (
+    detect_market_events as detect_market_events_flow,
+    normalize_events as normalize_events_flow,
+    normalize_events_from_documents as normalize_documents_flow,
+    normalize_events_from_indicators as normalize_indicators_flow,
+    run_event_normalization_demo as run_event_normalization_demo_flow,
+)
 from project_stock.ingest.dart import OpenDartCollector
 from project_stock.ingest.ecos import EcosCollector
 from project_stock.ingest.fred import FredCollector
@@ -165,6 +172,56 @@ def classify_events(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> N
             repo.add_event_entities(event.event_id, map_entities(f"{raw.title} {raw.body_text}"))
             events.append(event.event_id)
     _echo_json({"classified_events": len(events), "event_ids": events})
+
+
+@app.command()
+def normalize_events(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = normalize_events_flow(session)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def normalize_events_from_documents(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = normalize_documents_flow(session)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def normalize_events_from_indicators(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = normalize_indicators_flow(session)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def detect_market_events(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thresholds: Path = typer.Option(Path("configs/market_event_thresholds.yaml"), "--thresholds"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = detect_market_events_flow(session, thresholds_path=thresholds)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_event_normalization_demo(
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = run_event_normalization_demo_flow(session, fixture_dir)
+    _echo_json(result.model_dump(mode="json"))
 
 
 @app.command()

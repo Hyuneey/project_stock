@@ -61,6 +61,25 @@ project-stock ingest-krx-mock --fixture tests/fixtures/official/krx_market.json
 project-stock ingest-news-mock --fixture tests/fixtures/official/news_rss.json
 ```
 
+## Event Normalization Demo
+
+The normalization demo initializes the DB, registers sources, ingests the
+official mock bundle, converts source records into normalized events, and prints
+event counts plus mapped entity counts.
+
+```bash
+project-stock run-event-normalization-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Individual normalization commands are available for focused checks:
+
+```bash
+project-stock normalize-events-from-documents --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock normalize-events-from-indicators --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock detect-market-events --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock normalize-events --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
 ## CLI Commands
 
 - `project-stock init-db`: creates the SQLite schema.
@@ -73,6 +92,11 @@ project-stock ingest-news-mock --fixture tests/fixtures/official/news_rss.json
 - `project-stock ingest-krx-mock`: ingests mock KRX market series.
 - `project-stock ingest-news-mock`: ingests mock RSS/news items with checksum dedupe.
 - `project-stock ingest-official-mock-bundle`: runs one mock fixture per official collector.
+- `project-stock normalize-events`: normalizes all collected records into events.
+- `project-stock normalize-events-from-documents`: normalizes RawDocument records.
+- `project-stock normalize-events-from-indicators`: normalizes IndicatorObservation records.
+- `project-stock detect-market-events`: detects market events from MarketTimeSeries records.
+- `project-stock run-event-normalization-demo`: runs the offline ingestion-to-event demo.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
