@@ -8,6 +8,17 @@ from typing import Any
 import typer
 from rich.console import Console
 
+from project_stock.backtest.validation import (
+    DEFAULT_BACKTEST_CONFIG,
+    DEFAULT_MARKET_RETURNS,
+    DEFAULT_MEMO_DIR as DEFAULT_BACKTEST_MEMO_DIR,
+    DEFAULT_PORTFOLIO_FLAGS,
+    DEFAULT_PORTFOLIO_SNAPSHOTS,
+    DEFAULT_THESIS_STATES,
+    load_signal_snapshots,
+    run_backtest_demo as run_backtest_demo_flow,
+    validate_point_in_time_signals,
+)
 from project_stock.config import DEFAULT_DB_URL
 from project_stock.db.migrations import init_db as init_database
 from project_stock.db.models import RawDocument
@@ -451,6 +462,91 @@ def run_portfolio_review_demo(
             scenario_dir=scenario_dir,
         )
     _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_backtest_demo(
+    config: Path = typer.Option(DEFAULT_BACKTEST_CONFIG, "--config"),
+    market_returns: Path = typer.Option(DEFAULT_MARKET_RETURNS, "--market-returns"),
+    thesis_states: Path = typer.Option(DEFAULT_THESIS_STATES, "--thesis-states"),
+    portfolio_flags: Path = typer.Option(DEFAULT_PORTFOLIO_FLAGS, "--portfolio-flags"),
+    portfolio_snapshots: Path = typer.Option(DEFAULT_PORTFOLIO_SNAPSHOTS, "--portfolio-snapshots"),
+    memo_dir: Path = typer.Option(DEFAULT_BACKTEST_MEMO_DIR, "--memo-dir"),
+) -> None:
+    result, report = run_backtest_demo_flow(
+        config_path=config,
+        market_returns_path=market_returns,
+        thesis_states_path=thesis_states,
+        portfolio_flags_path=portfolio_flags,
+        portfolio_snapshots_path=portfolio_snapshots,
+        memo_dir=memo_dir,
+    )
+    _echo_json(
+        {
+            "backtest_id": result.backtest_id,
+            "policy_name": result.policy_name,
+            "benchmark_symbol": result.benchmark_symbol,
+            "cumulative_return": result.metrics.cumulative_return,
+            "benchmark_cumulative_return": result.metrics.benchmark_cumulative_return,
+            "benchmark_relative_return": result.metrics.benchmark_relative_return,
+            "average_turnover": result.metrics.average_turnover,
+            "transaction_cost_impact": result.metrics.transaction_cost_impact,
+            "validation_metrics": result.validation_metrics,
+            "trade_simulation_record_count": len(result.trade_records),
+            "point_in_time_warnings": result.point_in_time_warnings,
+            "report_path": report.report_path,
+            "no_auto_trade": result.no_auto_trade,
+        }
+    )
+
+
+@app.command()
+def validate_signals(
+    thesis_states: Path = typer.Option(DEFAULT_THESIS_STATES, "--thesis-states"),
+    portfolio_flags: Path = typer.Option(DEFAULT_PORTFOLIO_FLAGS, "--portfolio-flags"),
+    strict: bool = typer.Option(True, "--strict/--warn-only"),
+) -> None:
+    signals = load_signal_snapshots(thesis_states) + load_signal_snapshots(portfolio_flags)
+    warnings = validate_point_in_time_signals(signals, strict=strict)
+    _echo_json(
+        {
+            "signal_count": len(signals),
+            "warning_count": len(warnings),
+            "warnings": warnings,
+            "status": "valid" if not warnings else "warnings",
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def render_backtest_report(
+    config: Path = typer.Option(DEFAULT_BACKTEST_CONFIG, "--config"),
+    market_returns: Path = typer.Option(DEFAULT_MARKET_RETURNS, "--market-returns"),
+    thesis_states: Path = typer.Option(DEFAULT_THESIS_STATES, "--thesis-states"),
+    portfolio_flags: Path = typer.Option(DEFAULT_PORTFOLIO_FLAGS, "--portfolio-flags"),
+    portfolio_snapshots: Path = typer.Option(DEFAULT_PORTFOLIO_SNAPSHOTS, "--portfolio-snapshots"),
+    memo_dir: Path = typer.Option(DEFAULT_BACKTEST_MEMO_DIR, "--memo-dir"),
+) -> None:
+    result, report = run_backtest_demo_flow(
+        config_path=config,
+        market_returns_path=market_returns,
+        thesis_states_path=thesis_states,
+        portfolio_flags_path=portfolio_flags,
+        portfolio_snapshots_path=portfolio_snapshots,
+        memo_dir=memo_dir,
+    )
+    _echo_json(
+        {
+            "backtest_id": report.backtest_id,
+            "policy_name": report.policy_name,
+            "report_path": report.report_path,
+            "cumulative_return": result.metrics.cumulative_return,
+            "benchmark_relative_return": result.metrics.benchmark_relative_return,
+            "point_in_time_warnings": report.point_in_time_warnings,
+            "no_auto_trade": report.no_auto_trade,
+        }
+    )
 
 
 @app.command()

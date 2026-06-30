@@ -104,6 +104,26 @@ local portfolio fixture:
 `review-portfolio` can be run against an existing DB when thesis snapshots
 already exist. Portfolio flags are review prompts only and never broker orders.
 
+## Backtest Validation Workflow
+
+`run-backtest-demo` validates review signals against deterministic fixture
+returns:
+
+1. Load `configs/backtest.example.yaml`.
+2. Load fixture market returns, thesis state signals, portfolio flags, and
+   starting portfolio exposures.
+3. Enforce point-in-time signal availability.
+4. Run the configured review-only simulation policy.
+5. Run the benchmark comparison policy.
+6. Compute return/risk metrics, turnover, transaction cost impact, benchmark
+   relative return, and diagnostic signal usefulness metrics.
+7. Render `backtest_validation_report_<backtest_id>.md`.
+
+`validate-signals` checks signal `available_from` dates before simulation.
+`render-backtest-report` reruns the deterministic fixture validation and writes
+the markdown report. These workflows do not write EvidenceLedger, DecisionLog,
+or broker records; they are offline diagnostics only.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,

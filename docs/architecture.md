@@ -17,10 +17,13 @@ flowchart LR
   F --> G["Scenario matcher"]
   F --> H["Thesis lifecycle evaluator"]
   J --> M["Portfolio exposure review"]
+  J --> N["Backtest validation"]
+  M --> N
   G --> I["Playbook executor"]
   H --> J["ThesisStateSnapshot append"]
   I --> K["DecisionLog append"]
   M --> K
+  N --> L
   J --> L["Markdown memo"]
   K --> L
 ```
@@ -112,6 +115,19 @@ review flags such as `under_exposed_review`, `reduce_risk_review`,
 or trade instructions. Each review appends a `portfolio_review` DecisionLog row
 with exposure breakdown and risk flags, then renders a portfolio memo.
 
+## Backtest Validation Layer
+
+The validation layer replays deterministic fixture returns against historical
+thesis state signals, portfolio review flags, and point-in-time portfolio
+snapshots. It supports review-only simulation policies such as static portfolio,
+benchmark buy-and-hold, thesis-state risk overlay, and portfolio-flag overlay.
+
+Signals are only eligible when `available_from` is on or before the simulated
+decision date. Future-available signals raise or warn before simulation and are
+ignored until they become available. Performance metrics and diagnostic
+usefulness metrics are written to markdown reports. The layer never creates
+live orders, broker execution payloads, or LLM-directed investment decisions.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
@@ -151,6 +167,10 @@ append-only thesis state recommendations plus a thesis review memo.
 The portfolio review workflow can run after thesis review, turning current
 thesis states plus fixture holdings into exposure review flags and a portfolio
 review memo.
+
+The backtest validation workflow runs independently from live data ingestion. It
+loads fixture market returns and point-in-time signals, computes benchmark and
+overlay policy metrics, and renders a validation report.
 
 ## Scenario Matching
 

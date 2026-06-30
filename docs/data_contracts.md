@@ -235,6 +235,50 @@ Portfolio reviews append `DecisionLog` rows with `decision_type:
 portfolio_review`, `action: review_only`, and `portfolio_impact:
 human_review_required`.
 
+## Backtest Validation Contracts
+
+`BacktestConfig` is loaded from YAML and includes `backtest_id`, `start_date`,
+`end_date`, `base_currency`, `benchmark_symbol`, `rebalance_frequency`,
+`transaction_cost_bps`, `slippage_bps`, `max_turnover_per_period`,
+`policy_name`, nested `BacktestPolicy`, and `no_auto_trade: true`.
+
+`BacktestPolicy` defines the review-only simulation policy name, cash symbol,
+thesis-to-symbol mapping, risk reduction fraction, portfolio-flag reduction
+fraction, optional simulated overweight controls, and review flag types.
+
+`BacktestSignalSnapshot` is the point-in-time signal contract for thesis states,
+portfolio flags, scenario triggers, and evidence stance signals. It includes
+`signal_id`, `signal_date`, `available_from`, `signal_type`, optional
+`thesis_id`, `scenario_id`, `symbol`, `state`, `flag_type`, `stance`,
+`expected_direction`, scores, and metadata.
+
+`BacktestMarketReturn` fixture rows include `date`, `symbol`, decimal `return`,
+optional `benchmark_return`, and `available_from`.
+
+`BacktestPortfolioSnapshot` stores a dated exposure map with `available_from`.
+It is the only source of starting weights for fixture simulations.
+
+`BacktestTradeSimulationRecord` stores hypothetical exposure changes created by
+simulation policies. These records are not live trade orders and contain no
+broker execution fields.
+
+`BacktestPerformanceMetrics` includes cumulative return, annualized return,
+volatility, max drawdown, Calmar ratio, review-flag hit ratio, average turnover,
+transaction cost impact, benchmark cumulative return, benchmark relative return,
+and downside capture when benchmark-down periods exist.
+
+`BacktestValidationResult` combines policy metrics, optional benchmark policy
+metrics, diagnostic validation metrics, validation counts, hypothetical
+simulation records, period returns, benchmark returns, point-in-time warnings,
+and `no_auto_trade`.
+
+`BacktestReportResult` records the rendered markdown report path and the metrics
+needed by CLI summaries.
+
+Backtest point-in-time rule: a signal can affect simulated exposure only when
+`signal.available_from <= decision_date`. Signals with later availability are
+rejected in strict mode or ignored until available in warning mode.
+
 ## Scenario Trigger Contract
 
 Thesis, scenario, and playbook YAML files are validated with Pydantic schemas.

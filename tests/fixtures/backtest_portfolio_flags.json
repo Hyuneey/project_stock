@@ -1,0 +1,12 @@
+[
+  {
+    "signal_id": "PF_KOR_OVEREXPOSED_20260430",
+    "signal_date": "2026-04-30",
+    "available_from": "2026-04-30",
+    "signal_type": "portfolio_flag",
+    "thesis_id": "KOR_SEMI_MEMORY_UPCYCLE",
+    "flag_type": "over_exposed_review",
+    "expected_direction": "negative",
+    "confidence_score": 0.74
+  }
+]
