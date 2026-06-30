@@ -1,0 +1,104 @@
+# Dashboard MVP
+
+The dashboard MVP is a local Streamlit app for inspecting outputs from the
+macro-thematic flow system. It reads SQLite rows and markdown artifacts already
+created by offline demos or operational review loops.
+
+## Install
+
+Streamlit is optional:
+
+```bash
+python -m pip install -e ".[dev,dashboard]"
+```
+
+The normal test suite does not require launching Streamlit.
+
+## Prepare Demo Data
+
+Run:
+
+```bash
+project-stock prepare-dashboard-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+This command is offline and deterministic. It initializes the DB, runs the daily
+review loop over mock fixtures, runs thesis review, runs portfolio review, runs
+backtest validation, writes memo/report artifacts, and prints a dashboard launch
+command.
+
+## Launch
+
+Print the launch command:
+
+```bash
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+Start Streamlit directly:
+
+```bash
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed --launch
+```
+
+The printed command is equivalent to:
+
+```bash
+python -m streamlit run src/project_stock/dashboard/app.py -- --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+## Sections
+
+### Overview
+
+Shows the DB URL, latest available dates, table counts for core records, and
+latest memo/report artifacts under the memo directory.
+
+### Event Monitor
+
+Shows recent normalized events with event type, source, available time, summary,
+scores, and mapped entity counts. Event type and source filters are local only.
+
+### Evidence Monitor
+
+Shows evidence counts by thesis and stance, top evidence by strength score, and
+duplicate evidence skip counts when DecisionLog metadata contains them.
+
+### Thesis State Monitor
+
+Shows the latest ThesisStateSnapshot per thesis with support, contradiction,
+net evidence, risk score, transition reasons, and top supporting or
+contradicting evidence when the snapshot metadata links evidence IDs.
+
+### Portfolio Review
+
+Shows the latest `portfolio_review` DecisionLog, exposure breakdown, latest
+thesis states used by the review, and portfolio risk flags from metadata.
+
+### Scenario / Emergency Monitor
+
+Shows ScenarioTriggerLog rows and the latest `emergency_risk_review` DecisionLog
+when present, including allowed risk-review actions, forbidden actions, and
+emergency level if available.
+
+### Backtest Validation
+
+Shows the latest `backtest_validation_report_*.md` artifact from the memo
+directory, parsed return/risk metrics, diagnostic metrics, and point-in-time
+warnings.
+
+## Limitations
+
+- The dashboard is a local MVP and reads only the configured SQLite DB and memo
+  directory.
+- It does not fetch external data or require API keys.
+- Empty tables render empty sections instead of raising.
+- Backtest metrics are parsed from local report artifacts unless future
+  persistence is added.
+- It is not an operations console for live execution.
+
+## No-Auto-Trade Boundary
+
+Dashboard output is human review support only. It must not create broker orders,
+order-routing payloads, live trading instructions, auto-trading actions, or
+LLM-directed buy/sell decisions.

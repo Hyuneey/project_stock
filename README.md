@@ -106,6 +106,23 @@ Backtest policies produce hypothetical exposure-change records for validation
 only. They do not create broker orders, live trading instructions, or
 LLM-directed buy/sell decisions.
 
+## Dashboard Demo
+
+The dashboard MVP is a local Streamlit app for inspecting operational outputs:
+events, evidence, thesis states, portfolio reviews, scenario triggers,
+emergency reviews, memo artifacts, and backtest validation reports.
+
+```bash
+python -m pip install -e ".[dev,dashboard]"
+project-stock prepare-dashboard-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+`run-dashboard` prints the Streamlit launch command by default. Add `--launch`
+to start the local Streamlit process. The dashboard is read-only review support
+and does not create broker orders, live trading instructions, or LLM-directed
+buy/sell decisions.
+
 ## Official Data Mock Demo
 
 These commands register official source metadata and ingest one deterministic
@@ -193,6 +210,8 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock run-backtest-demo`: runs the offline fixture-based validation demo.
 - `project-stock validate-signals`: checks signal `available_from` point-in-time safety.
 - `project-stock render-backtest-report`: renders the backtest validation report.
+- `project-stock prepare-dashboard-demo`: prepares offline demo DB rows and memo/report artifacts.
+- `project-stock run-dashboard`: prints or launches the local Streamlit dashboard command.
 - `project-stock classify-events`: classifies raw documents into events.
 - `project-stock run-daily`: runs the Daily Sentinel and writes a risk memo.
 - `project-stock run-emergency`: runs the Intraday Emergency Sentinel fixture flow.
@@ -209,6 +228,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `src/project_stock/operations/`: daily and intraday operational review loops.
 - `src/project_stock/portfolio/`: portfolio exposure and thesis-state-aware review.
 - `src/project_stock/backtest/`: offline deterministic review-simulation validation.
+- `src/project_stock/dashboard/`: local dashboard query helpers and Streamlit entrypoint.
 - `src/project_stock/thesis/`: thesis loading and lifecycle state evaluation.
 - `src/project_stock/sentinel/`: daily and intraday sentinel flows.
 - `src/project_stock/reports/templates/`: Jinja2 markdown memo templates.

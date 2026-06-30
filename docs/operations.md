@@ -124,6 +124,24 @@ returns:
 the markdown report. These workflows do not write EvidenceLedger, DecisionLog,
 or broker records; they are offline diagnostics only.
 
+## Dashboard Workflow
+
+`prepare-dashboard-demo` prepares local demo data for inspection:
+
+1. Initialize the SQLite database.
+2. Run the offline daily review loop with official mock fixtures.
+3. Run the thesis review demo.
+4. Run the portfolio review demo.
+5. Run the backtest validation demo.
+6. Print the Streamlit launch command.
+
+`run-dashboard` prints the command needed to launch the local Streamlit app. With
+`--launch`, it starts Streamlit locally. Tests use the query helpers and command
+printing only; they do not start a browser or server.
+
+Dashboard sections are read-only views over existing operational outputs. They
+must not mutate audit rows, fetch external data, or create live trading records.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,
