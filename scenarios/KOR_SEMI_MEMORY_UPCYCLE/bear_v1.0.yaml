@@ -1,0 +1,30 @@
+scenario_id: KOR_SEMI_EARNINGS_BEAR
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "1.0"
+status: active
+scenario_type: bear
+horizon: "1 week to 6 months"
+description: >
+  Earnings revisions and relative strength deteriorate enough to challenge the
+  memory upcycle thesis.
+trigger:
+  any_of:
+    - metric: EPS_REVISION_1M_PCT
+      operator: "<"
+      value: -3
+    - metric: MEMORY_PRICE_CHANGE_1M_PCT
+      operator: "<"
+      value: -2
+    - metric: KOR_SEMI_REL_STRENGTH_1M_PCT
+      operator: "<"
+      value: -5
+expected_path:
+  T0: Reduce confidence and require close review.
+risk_action:
+  - no_new_buy
+  - review_exposure
+thesis_action:
+  default: deteriorating
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: weekly

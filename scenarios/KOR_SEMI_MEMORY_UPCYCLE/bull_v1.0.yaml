@@ -1,0 +1,29 @@
+scenario_id: KOR_SEMI_AI_DEMAND_BULL
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "1.0"
+status: active
+scenario_type: bull
+horizon: "1 month to 12 months"
+description: >
+  AI memory demand and semiconductor relative strength confirm the upcycle.
+trigger:
+  any_of:
+    - metric: HBM_PRICE_CHANGE_1M_PCT
+      operator: ">="
+      value: 5
+    - metric: EPS_REVISION_1M_PCT
+      operator: ">"
+      value: 2
+    - metric: KOR_SEMI_REL_STRENGTH_1M_PCT
+      operator: ">"
+      value: 3
+expected_path:
+  T0: Positive industry data improves confidence.
+risk_action:
+  - maintain_watchlist
+  - review_position_quality
+thesis_action:
+  default: active
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: monthly

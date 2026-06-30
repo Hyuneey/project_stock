@@ -1,0 +1,39 @@
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "1.0"
+status: active
+title: Korean semiconductor memory upcycle
+created_at: "2026-06-29"
+last_reviewed_at: "2026-06-29"
+time_horizon:
+  investment: "6 to 24 months"
+  structural: "3 to 5 years"
+core_claim: >
+  AI server demand and disciplined memory supply can support better memory
+  pricing, margins, EPS revisions, and relative strength for Korean semiconductor
+  leaders.
+beneficiaries:
+  primary:
+    - Samsung Electronics
+    - SK Hynix
+    - Korean semiconductor ETF
+  secondary:
+    - Semiconductor equipment
+    - Materials and components
+core_assumptions:
+  - id: A1
+    statement: AI server demand remains resilient.
+  - id: A2
+    statement: Memory pricing continues to improve.
+  - id: A3
+    statement: EPS revisions turn upward.
+  - id: A4
+    statement: Foreign exchange and rates do not overwhelm equity duration.
+invalidation_conditions:
+  - Memory pricing turns down.
+  - EPS revisions turn negative.
+  - AI capex slows materially.
+  - Relative strength breaks down for three months.
+state_history:
+  - date: "2026-06-29"
+    state: active
+    reason: Initial MVP thesis definition.

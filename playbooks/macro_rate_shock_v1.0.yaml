@@ -1,0 +1,22 @@
+playbook_id: PB_MACRO_RATE_SHOCK_001
+version: "1.0"
+linked_scenarios:
+  - KOR_SEMI_RATE_SHOCK_BEAR
+activation:
+  emergency_level_min: E3
+  required_confirmation:
+    - rates_move_confirmed
+    - usd_move_confirmed
+allowed_actions:
+  - no_new_buy
+  - reduce_high_beta_exposure
+  - increase_cash
+forbidden_actions:
+  - headline_only_full_liquidation
+  - unverified_rumor_trade
+  - llm_direct_trade_decision
+cooldown:
+  min_review_interval: "1 trading day"
+  reentry_requires:
+    - cross_asset_stabilization
+    - relative_strength_recovery

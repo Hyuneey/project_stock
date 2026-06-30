@@ -1,0 +1,12 @@
+universe_id: KOR_SEMI_CORE
+base_currency: KRW
+themes:
+  - KOR_SEMI_MEMORY_UPCYCLE
+  - AI_INFRASTRUCTURE
+symbols:
+  - symbol: "005930"
+    name: Samsung Electronics
+    role: primary
+  - symbol: "000660"
+    name: SK Hynix
+    role: primary

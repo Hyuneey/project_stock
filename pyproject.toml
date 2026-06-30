@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "project-stock"
+version = "0.1.0"
+description = "Macro-thematic flow investment decision-support MVP scaffold."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Project Stock" }]
+dependencies = [
+  "duckdb>=1.0",
+  "jinja2>=3.1",
+  "pandas>=2.2",
+  "pyarrow>=15.0",
+  "pydantic>=2.7,<3",
+  "python-dotenv>=1.0",
+  "pyyaml>=6.0",
+  "rich>=13.7",
+  "sqlalchemy>=2.0",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+project-stock = "project_stock.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+project_stock = ["reports/templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--basetemp=.pytest_tmp"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
