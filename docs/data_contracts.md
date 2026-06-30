@@ -61,6 +61,36 @@ event back to the collected record.
 OpenDART and News/RSS this is usually `published_at`; for ECOS/FRED this is
 `release_at`; for market data this is the market observation `timestamp`.
 
+## Evidence Candidate Contract
+
+`EvidenceCandidate` is an intermediate, deterministic candidate generated from a
+normalized `Event` and its `EventEntity` rows before append-only persistence.
+Each candidate must include:
+
+- `candidate_id`: stable candidate identifier.
+- `event_id`: source normalized event.
+- `thesis_id`: thesis receiving the evidence.
+- `scenario_id`: optional scenario linkage when event type or trigger-related
+  context matches a scenario for the same thesis.
+- `evidence_type`: MVP evidence category, currently `event:<event_type>`.
+- `claim`: human-readable evidence statement.
+- `supports_or_contradicts`: one of `supports`, `contradicts`, or `neutral`.
+- `strength_score`: 0 to 5 score combining source reliability, surprise,
+  persistence, market confirmation, thesis relevance, and event-type severity.
+- `relevance_score`: 0 to 100 thesis relevance score.
+- `confidence_score`: 0 to 100 confidence score for the deterministic mapping.
+- `source_event_type`: event taxonomy value used to generate the candidate.
+- `source_entity_ids`: mapped entity IDs used for relevance and audit review.
+- `created_at`: candidate generation timestamp.
+- `metadata_json`: mapped entity types, relevance reasons, matched keywords, and
+  source event lineage.
+
+Appending evidence converts a candidate into an `EvidenceLedger` row. The append
+path stores the canonical source event in `event_id`, mapped entity IDs in
+`source_ids_json`, and preserves candidate metadata. Duplicate appends for the
+same `event_id`, `thesis_id`, `scenario_id`, and `evidence_type` are skipped at
+the service layer.
+
 ## Collector Contract
 
 Official collectors expose `collector_id`, `source_id`, `fetch_raw`, `normalize`,
