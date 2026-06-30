@@ -38,6 +38,10 @@ from project_stock.operations.review_loop import (
     run_daily_review_loop as run_daily_review_loop_flow,
     run_intraday_review_loop as run_intraday_review_loop_flow,
 )
+from project_stock.portfolio.review import (
+    review_portfolio as review_portfolio_flow,
+    run_portfolio_review_demo as run_portfolio_review_demo_flow,
+)
 from project_stock.scoring.big_flow import score_big_flow as compute_big_flow_score
 from project_stock.schemas.scoring import BigFlowScoreInput
 from project_stock.sentinel.daily import run_daily_sentinel
@@ -398,6 +402,53 @@ def archive_thesis(
             thesis_dir=thesis_dir,
             reason=reason,
             force=force,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def review_portfolio(
+    portfolio_fixture: Path = typer.Option(..., "--portfolio-fixture"),
+    portfolio_config: Path = typer.Option(Path("configs/portfolio.example.yaml"), "--portfolio-config"),
+    as_of: str = typer.Option(..., "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = review_portfolio_flow(
+            session=session,
+            portfolio_fixture=portfolio_fixture,
+            portfolio_config=portfolio_config,
+            as_of=date.fromisoformat(as_of),
+            memo_dir=memo_dir,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_portfolio_review_demo(
+    as_of: str = typer.Option("2026-06-29", "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    portfolio_fixture: Path = typer.Option(
+        Path("tests/fixtures/portfolio_holdings_core_satellite.json"),
+        "--portfolio-fixture",
+    ),
+    portfolio_config: Path = typer.Option(Path("configs/portfolio.example.yaml"), "--portfolio-config"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = run_portfolio_review_demo_flow(
+            session=session,
+            as_of=date.fromisoformat(as_of),
+            portfolio_fixture=portfolio_fixture,
+            portfolio_config=portfolio_config,
+            memo_dir=memo_dir,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
         )
     _echo_json(result.model_dump(mode="json"))
 

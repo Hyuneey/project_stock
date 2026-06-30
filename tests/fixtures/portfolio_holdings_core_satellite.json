@@ -1,0 +1,83 @@
+{
+  "portfolio_id": "PERSONAL_CORE_SATELLITE",
+  "as_of": "2026-06-29",
+  "base_currency": "KRW",
+  "holdings": [
+    {
+      "symbol": "CASH_KRW",
+      "name": "Korean won cash",
+      "market_value": 12000000,
+      "currency": "KRW",
+      "asset_type": "cash",
+      "theme_ids": [],
+      "thesis_ids": [],
+      "sector": "Cash",
+      "liquidity_bucket": "same_day"
+    },
+    {
+      "symbol": "005930",
+      "name": "Samsung Electronics",
+      "quantity": 120,
+      "market_value": 18000000,
+      "currency": "KRW",
+      "asset_type": "equity",
+      "theme_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "thesis_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "sector": "Semiconductor",
+      "beta": 1.05,
+      "liquidity_bucket": "large_cap"
+    },
+    {
+      "symbol": "000660",
+      "name": "SK Hynix",
+      "quantity": 55,
+      "market_value": 17000000,
+      "currency": "KRW",
+      "asset_type": "equity",
+      "theme_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "thesis_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "sector": "Semiconductor",
+      "beta": 1.25,
+      "liquidity_bucket": "large_cap"
+    },
+    {
+      "symbol": "KODEX_SEMI",
+      "name": "Korean semiconductor ETF",
+      "quantity": 300,
+      "market_value": 9000000,
+      "currency": "KRW",
+      "asset_type": "equity",
+      "theme_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "thesis_ids": ["KOR_SEMI_MEMORY_UPCYCLE"],
+      "sector": "Semiconductor",
+      "beta": 1.15,
+      "liquidity_bucket": "etf"
+    },
+    {
+      "symbol": "AI_INFRA_PROXY",
+      "name": "AI infrastructure proxy",
+      "quantity": 40,
+      "market_value": 11000000,
+      "currency": "USD",
+      "asset_type": "equity",
+      "theme_ids": ["AI_INFRASTRUCTURE"],
+      "thesis_ids": ["AI_INFRASTRUCTURE"],
+      "sector": "Technology Infrastructure",
+      "beta": 1.35,
+      "liquidity_bucket": "large_cap"
+    },
+    {
+      "symbol": "KRW_BOND_LIKE",
+      "name": "Defensive cash-like bond fund",
+      "quantity": 100,
+      "market_value": 13000000,
+      "currency": "KRW",
+      "asset_type": "cash_like",
+      "theme_ids": [],
+      "thesis_ids": [],
+      "sector": "Defensive",
+      "beta": 0.15,
+      "liquidity_bucket": "two_day"
+    }
+  ]
+}

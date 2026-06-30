@@ -88,8 +88,25 @@ and a no-auto-trade disclaimer.
 from already accumulated evidence. `archive-thesis` is the only path that
 creates an `archived` snapshot.
 
+## Portfolio Review Process
+
+`run-portfolio-review-demo` runs the thesis review demo first, then reviews a
+local portfolio fixture:
+
+1. Ensure thesis state snapshots exist.
+2. Load `configs/portfolio.example.yaml`.
+3. Load `tests/fixtures/portfolio_holdings_core_satellite.json`.
+4. Calculate exposure by cash, theme, thesis, sector, asset, beta, and currency.
+5. Compare exposure with latest thesis states and configured review limits.
+6. Append a `portfolio_review` DecisionLog row.
+7. Render `portfolio_review_memo_<portfolio_id>_<date>.md`.
+
+`review-portfolio` can be run against an existing DB when thesis snapshots
+already exist. Portfolio flags are review prompts only and never broker orders.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,
-thesis state snapshots, and markdown memos. Forbidden outputs are broker orders,
-automatic trade execution, and LLM-directed investment decisions.
+thesis state snapshots, portfolio review flags, and markdown memos. Forbidden
+outputs are broker orders, automatic trade execution, and LLM-directed
+investment decisions.

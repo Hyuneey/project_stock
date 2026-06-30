@@ -199,6 +199,42 @@ fingerprint skips duplicate snapshots unless a force flag is used. Snapshot
 metadata stores evidence IDs, scoring components, transition reasons,
 invalidation warnings, recommended review action, and `no_auto_trade`.
 
+## Portfolio Review Contracts
+
+`PortfolioConfig` is loaded from YAML and includes:
+
+- `portfolio_id`
+- `base_currency`
+- `review_frequency`
+- `max_total_equity_exposure`
+- `max_theme_exposure`
+- `max_single_asset_exposure`
+- `cash_buffer_min`
+- `risk_budget`
+- `thesis_exposure_map`
+- `asset_theme_map`
+- `benchmark_symbols`
+
+`PortfolioHolding` includes `symbol`, `name`, optional `quantity`,
+`market_value`, `currency`, `asset_type`, `theme_ids`, `thesis_ids`, `sector`,
+optional `beta`, and optional `liquidity_bucket`.
+
+`PortfolioSnapshot` groups holdings by `portfolio_id`, `as_of`, and
+`base_currency`.
+
+`PortfolioExposure` records total market value, cash value and ratio, total
+equity exposure, theme exposure, thesis exposure, sector exposure, single asset
+exposure, high beta exposure, and foreign currency exposure.
+
+`PortfolioRiskFlag` records a review-only flag type, severity, message, review
+action, optional thesis/theme/symbol, exposure, and threshold.
+
+`PortfolioReviewResult` includes portfolio ID, date, exposure breakdown, latest
+thesis states, risk flags, DecisionLog ID, memo path, and `no_auto_trade`.
+Portfolio reviews append `DecisionLog` rows with `decision_type:
+portfolio_review`, `action: review_only`, and `portfolio_impact:
+human_review_required`.
+
 ## Scenario Trigger Contract
 
 Thesis, scenario, and playbook YAML files are validated with Pydantic schemas.

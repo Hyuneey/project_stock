@@ -1,0 +1,64 @@
+# Portfolio Review Memo
+
+Portfolio: {{ result.portfolio_id }}
+
+Date: {{ result.as_of }}
+
+{{ disclaimer }}
+
+## Exposure Summary
+
+- Total value: {{ result.exposure.total_market_value }}
+- Cash ratio: {{ "%.2f"|format(result.exposure.cash_ratio * 100) }}%
+- Total equity exposure: {{ "%.2f"|format(result.exposure.total_equity_exposure * 100) }}%
+- High beta exposure: {{ "%.2f"|format(result.exposure.high_beta_ratio * 100) }}%
+
+## Theme Exposure
+
+| Theme | Exposure | Limit |
+| --- | ---: | ---: |
+{% for theme_id, exposure in result.exposure.theme_exposure.items() %}
+| {{ theme_id }} | {{ "%.2f"|format(exposure * 100) }}% | {{ "%.2f"|format(config.max_theme_exposure.get(theme_id, 0) * 100) }}% |
+{% endfor %}
+
+## Thesis Exposure
+
+| Thesis | State | Exposure |
+| --- | --- | ---: |
+{% for thesis_id, exposure in result.exposure.thesis_exposure.items() %}
+| {{ thesis_id }} | {{ result.latest_thesis_states.get(thesis_id) or "missing" }} | {{ "%.2f"|format(exposure * 100) }}% |
+{% endfor %}
+
+## Concentration Warnings
+
+{% set concentration = result.risk_flags | selectattr("flag_type", "equalto", "concentration_warning") | list %}
+{% if concentration %}
+{% for flag in concentration %}
+- {{ flag.symbol }}: {{ flag.message }} Exposure {{ "%.2f"|format((flag.exposure or 0) * 100) }}%, threshold {{ "%.2f"|format((flag.threshold or 0) * 100) }}%.
+{% endfor %}
+{% else %}
+- No concentration warnings.
+{% endif %}
+
+## Thesis-State Mismatches
+
+{% set thesis_flags = result.risk_flags | rejectattr("flag_type", "equalto", "concentration_warning") | list %}
+{% if thesis_flags %}
+{% for flag in thesis_flags %}
+- {{ flag.flag_type }}{% if flag.thesis_id %} / {{ flag.thesis_id }}{% endif %}{% if flag.theme_id %} / {{ flag.theme_id }}{% endif %}: {{ flag.message }}
+{% endfor %}
+{% else %}
+- No thesis-state mismatch flags.
+{% endif %}
+
+## Risk Review Flags
+
+{% if result.risk_flags %}
+{% for flag in result.risk_flags %}
+- {{ flag.flag_type }}: {{ flag.review_action }}
+{% endfor %}
+{% else %}
+- No risk review flags.
+{% endif %}
+
+Decision log: {{ result.decision_id }}
