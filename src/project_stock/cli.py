@@ -41,7 +41,11 @@ from project_stock.evidence.generation import (
     run_evidence_demo as run_evidence_demo_flow,
 )
 from project_stock.ingest.base import CollectorConfigError
-from project_stock.ingest.dart import OpenDartCollector
+from project_stock.ingest.dart import (
+    DART_API_KEY_ENV_VARS,
+    OpenDartCollector,
+    load_opendart_corp_codes,
+)
 from project_stock.ingest.ecos import EcosCollector, load_ecos_series_config
 from project_stock.ingest.fred import FredCollector, SUPPORTED_FRED_SERIES
 from project_stock.ingest.krx import KrxCollector
@@ -154,6 +158,42 @@ def real_data_doctor(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> 
 
 
 @app.command()
+def opendart_doctor(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+) -> None:
+    configured_companies: list[str] = []
+    config_error = None
+    if corp_code_config.exists():
+        try:
+            configured_companies = sorted(load_opendart_corp_codes(corp_code_config))
+        except ValueError as exc:
+            config_error = str(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "db_url": db_url,
+            NETWORK_ENV_VAR: os.getenv(NETWORK_ENV_VAR, "false"),
+            "network_enabled": network_enabled(),
+            "dart_api_key_set": bool(os.getenv("DART_API_KEY")),
+            "open_dart_api_key_set": bool(os.getenv("OPEN_DART_API_KEY")),
+            "accepted_api_key_env_vars": list(DART_API_KEY_ENV_VARS),
+            "corp_code_config": str(corp_code_config),
+            "corp_code_config_exists": corp_code_config.exists(),
+            "corp_code_config_error": config_error,
+            "configured_stock_codes": configured_companies,
+            "raw_cache_directory": "data/raw/opendart",
+            "supported_scope": "disclosure list only; no report body, XBRL, or financial extraction",
+            "no_auto_trade": True,
+            "warning": "Decision support only: no broker execution, no auto-trading, no LLM trade decisions.",
+        }
+    )
+
+
+@app.command()
 def load_yaml(
     thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
     scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
@@ -188,6 +228,107 @@ def ingest_dart_mock(
     init_database(db_url)
     with session_scope(db_url) as session:
         result = OpenDartCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def fetch_opendart_disclosures(
+    corp_code: str | None = typer.Option(None, "--corp-code"),
+    stock_code: str | None = typer.Option(None, "--stock-code"),
+    bgn_de: str = typer.Option(..., "--bgn-de"),
+    end_de: str = typer.Option(..., "--end-de"),
+    page_no: int = typer.Option(1, "--page-no"),
+    page_count: int = typer.Option(10, "--page-count"),
+    pblntf_ty: str | None = typer.Option(None, "--pblntf-ty"),
+    last_reprt_at: str | None = typer.Option(None, "--last-reprt-at"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    try:
+        collector = OpenDartCollector()
+        raw_records = collector.fetch_disclosures(
+            corp_code=corp_code,
+            stock_code=stock_code,
+            bgn_de=bgn_de,
+            end_de=end_de,
+            page_no=page_no,
+            page_count=page_count,
+            pblntf_ty=pblntf_ty,
+            last_reprt_at=last_reprt_at,
+            corp_code_config=corp_code_config,
+            cache_raw=cache_raw,
+        )
+        documents = collector.normalize(raw_records)
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "source_id": "OPEN_DART",
+            "record_count": len(documents),
+            "documents": [document.model_dump(mode="json") for document in documents],
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def ingest_opendart_disclosures(
+    corp_code: str | None = typer.Option(None, "--corp-code"),
+    stock_code: str | None = typer.Option(None, "--stock-code"),
+    bgn_de: str = typer.Option(..., "--bgn-de"),
+    end_de: str = typer.Option(..., "--end-de"),
+    page_no: int = typer.Option(1, "--page-no"),
+    page_count: int = typer.Option(10, "--page-count"),
+    pblntf_ty: str | None = typer.Option(None, "--pblntf-ty"),
+    last_reprt_at: str | None = typer.Option(None, "--last-reprt-at"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = OpenDartCollector().ingest_disclosures(
+                session=session,
+                corp_code=corp_code,
+                stock_code=stock_code,
+                bgn_de=bgn_de,
+                end_de=end_de,
+                page_no=page_no,
+                page_count=page_count,
+                pblntf_ty=pblntf_ty,
+                last_reprt_at=last_reprt_at,
+                corp_code_config=corp_code_config,
+                cache_raw=cache_raw,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_opendart_disclosures_fixture(
+    fixture: Path = typer.Option(..., "--fixture"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = OpenDartCollector().ingest_disclosures(
+            session=session,
+            corp_code=None,
+            stock_code=None,
+            bgn_de="19700101",
+            end_de="29991231",
+            fixture=fixture,
+            cache_raw=False,
+        )
     _echo_json(result.model_dump(mode="json"))
 
 

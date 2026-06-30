@@ -34,6 +34,10 @@ class UnsupportedSeriesError(CollectorConfigError):
     """Raised when a requested real-data series is outside the MVP allowlist."""
 
 
+class UnsupportedQueryError(CollectorConfigError):
+    """Raised when a requested query is outside the MVP-supported scope."""
+
+
 def network_enabled() -> bool:
     return os.getenv(NETWORK_ENV_VAR, "false").strip().lower() in TRUE_VALUES
 
@@ -50,6 +54,15 @@ def require_api_key(name: str) -> str:
     if not value:
         raise MissingApiKeyError(f"Missing API key: set {name} in the environment or .env.")
     return value
+
+
+def require_any_api_key(names: tuple[str, ...]) -> tuple[str, str]:
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return name, value
+    joined = " or ".join(names)
+    raise MissingApiKeyError(f"Missing API key: set {joined} in the environment or .env.")
 
 
 def utc_now() -> datetime:
@@ -72,6 +85,18 @@ def build_raw_cache_path(
     start = sanitize_cache_component(start_date)
     end = sanitize_cache_component(end_date)
     return data_dir / "raw" / source_dir / f"{series}_{start}_{end}.json"
+
+
+def build_timestamped_raw_cache_path(
+    source: str,
+    prefix: str,
+    collected_at: datetime | None = None,
+    data_dir: Path = Path("data"),
+) -> Path:
+    timestamp = (collected_at or utc_now()).astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    source_dir = sanitize_cache_component(source).lower()
+    safe_prefix = sanitize_cache_component(prefix)
+    return data_dir / "raw" / source_dir / f"{safe_prefix}_{timestamp}.json"
 
 
 def write_raw_response_cache(payload: Any, cache_path: Path) -> Path:
