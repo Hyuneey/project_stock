@@ -182,6 +182,25 @@ This adapter only handles disclosure list rows. It does not download full report
 bodies, parse XBRL, extract financial statements, execute broker orders,
 auto-trade, or make LLM-directed investment decisions.
 
+## OpenDART Financial Statement Demo
+
+OpenDART single-company financial statements can be ingested from an offline
+fixture into `FinancialStatementLineItem` rows, then summarized into normalized
+events. The fixture path requires no network and no API key.
+
+```bash
+project-stock ingest-opendart-financials-fixture --fixture tests/fixtures/opendart_financial_statement_response.json --stock-code 005930 --bsns-year 2026 --reprt-code 11013 --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock normalize-financial-events --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock generate-evidence-candidates --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Real OpenDART financial fetches are opt-in only. Set
+`PROJECT_STOCK_ALLOW_NETWORK=true` and `DART_API_KEY` or `OPEN_DART_API_KEY`
+before using `fetch-opendart-financials` or `ingest-opendart-financials`.
+Supported report codes are `11013`, `11012`, `11014`, and `11011`. The adapter
+does not download XBRL, parse footnotes, execute broker orders, auto-trade, or
+delegate investment decisions to an LLM.
+
 ## Event Normalization Demo
 
 The normalization demo initializes the DB, registers sources, ingests the
@@ -231,7 +250,11 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock ingest-krx-mock`: ingests mock KRX market series.
 - `project-stock ingest-news-mock`: ingests mock RSS/news items with checksum dedupe.
 - `project-stock ingest-official-mock-bundle`: runs one mock fixture per official collector.
+- `project-stock fetch-opendart-financials`: fetches opt-in OpenDART financial preview rows.
+- `project-stock ingest-opendart-financials`: ingests opt-in OpenDART financial rows.
+- `project-stock ingest-opendart-financials-fixture`: ingests OpenDART financial fixture rows offline.
 - `project-stock normalize-events`: normalizes all collected records into events.
+- `project-stock normalize-financial-events`: normalizes summary financial rows into events.
 - `project-stock normalize-events-from-documents`: normalizes RawDocument records.
 - `project-stock normalize-events-from-indicators`: normalizes IndicatorObservation records.
 - `project-stock detect-market-events`: detects market events from MarketTimeSeries records.
@@ -263,6 +286,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `playbooks/`: risk-action playbooks; never broker orders.
 - `src/project_stock/db/`: SQLAlchemy models and DB initialization.
 - `src/project_stock/ingest/`: official collector interfaces and mock collectors.
+- `src/project_stock/events/financials.py`: financial statement event normalization.
 - `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
 - `src/project_stock/operations/`: daily and intraday operational review loops.
 - `src/project_stock/portfolio/`: portfolio exposure and thesis-state-aware review.

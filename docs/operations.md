@@ -124,6 +124,29 @@ returns:
 the markdown report. These workflows do not write EvidenceLedger, DecisionLog,
 or broker records; they are offline diagnostics only.
 
+## OpenDART Financial Statement Workflow
+
+Use the fixture-backed path for local validation:
+
+1. Run `ingest-opendart-financials-fixture` with a fixture, stock or corp code,
+   business year, and supported report code.
+2. Run `normalize-financial-events` to convert supported summary accounts into
+   normalized events and mapped entities.
+3. Run `generate-evidence-candidates` or the broader review demos to connect
+   those events to thesis evidence.
+
+The real commands `fetch-opendart-financials` and `ingest-opendart-financials`
+are disabled unless `PROJECT_STOCK_ALLOW_NETWORK=true` and `DART_API_KEY` or
+`OPEN_DART_API_KEY` is set. They write raw JSON caches under
+`data/raw/opendart/financial/` when caching is enabled. The adapter uses
+`collected_at` as the conservative `available_from` when OpenDART response rows
+do not contain an exact timestamp.
+
+This workflow supports only single-company financial statement ingestion for
+report codes `11013`, `11012`, `11014`, and `11011`. It does not download XBRL,
+parse footnotes, produce orders, auto-trade, or delegate investment decisions to
+an LLM.
+
 ## Dashboard Workflow
 
 `prepare-dashboard-demo` prepares local demo data for inspection:
