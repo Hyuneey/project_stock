@@ -10,16 +10,24 @@ offline.
 
 ## ECOS
 
-Bank of Korea ECOS is the planned source for Korean macro indicators. The MVP
-mock collector maps fixture records to `IndicatorObservation` with `release_at`,
-`collected_at`, and `available_from`.
+Bank of Korea ECOS is the source for Korean macro indicators. The offline mock
+collector maps fixture records to `IndicatorObservation`; the real adapter can
+fetch ECOS StatisticSearch data only when `PROJECT_STOCK_ALLOW_NETWORK=true` and
+`ECOS_API_KEY` is set. Supported indicators are configured in
+`configs/ecos.series.example.yaml` or a private file passed with
+`--series-config`.
 
 ## FRED and Future ALFRED
 
-FRED is the planned source for US and global macro indicators. The mock collector
-supports an optional `vintage_date` field and stores ALFRED-readiness metadata so
-future vintage-aware ingestion can be added without changing the downstream
-indicator table contract.
+FRED is the source for US and global macro indicators. The offline mock
+collector supports an optional `vintage_date` field and stores ALFRED-readiness
+metadata. The real adapter supports an MVP allowlist: `DGS10`, `DGS2`,
+`VIXCLS`, and `FEDFUNDS`. Real fetches run only when
+`PROJECT_STOCK_ALLOW_NETWORK=true` and `FRED_API_KEY` is set.
+
+Real FRED and ECOS fetches cache raw JSON under `data/raw/fred/` and
+`data/raw/ecos/` by default. Cache paths are stored in indicator metadata when
+available. Downloaded data is ignored by Git.
 
 ## KRX
 
@@ -47,4 +55,5 @@ forward safe `available_from` timestamps.
 
 Collectors prepare data for decision support only. They do not execute broker
 orders, do not auto-trade, and do not let LLMs make investment decisions. Tests
-must remain deterministic, offline, and free of required API keys.
+must remain deterministic, offline, and free of required API keys. Real fetches
+must be explicitly enabled with `PROJECT_STOCK_ALLOW_NETWORK=true`.

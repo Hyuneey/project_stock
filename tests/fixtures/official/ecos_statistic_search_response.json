@@ -1,0 +1,16 @@
+{
+  "StatisticSearch": {
+    "list_total_count": 1,
+    "row": [
+      {
+        "STAT_CODE": "722Y001",
+        "STAT_NAME": "Bank of Korea Base Rate",
+        "ITEM_CODE1": "0101000",
+        "ITEM_NAME1": "Base Rate",
+        "UNIT_NAME": "percent",
+        "TIME": "20260629",
+        "DATA_VALUE": "2.50"
+      }
+    ]
+  }
+}

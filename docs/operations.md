@@ -142,6 +142,27 @@ printing only; they do not start a browser or server.
 Dashboard sections are read-only views over existing operational outputs. They
 must not mutate audit rows, fetch external data, or create live trading records.
 
+## Real Data Activation Workflow
+
+FRED and ECOS real adapters are opt-in. The normal test suite and local demos
+remain offline.
+
+1. Run `project-stock real-data-doctor` to inspect DB URL, network flag, API key
+   presence, raw cache directories, supported FRED series, configured ECOS
+   series, and point-in-time cautions. This command performs no network calls.
+2. Set `PROJECT_STOCK_ALLOW_NETWORK=true` only for intentional real fetches.
+3. Set `FRED_API_KEY` or `ECOS_API_KEY` in the environment or `.env`.
+4. Use `fetch-fred-series` or `fetch-ecos-series` to preview normalized
+   observations without DB insert.
+5. Use `ingest-fred-series` or `ingest-ecos-series` to append
+   `IndicatorObservation` rows.
+
+Raw JSON responses are cached under `data/raw/fred/` and `data/raw/ecos/` by
+default and remain ignored by Git. Real observations are marked `available_from`
+no earlier than source release metadata and local collection time, but source
+release calendars and vintage behavior still require additional review before
+research use.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,
