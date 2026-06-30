@@ -27,7 +27,7 @@ class MissingApiKeyError(CollectorConfigError):
 
 
 class InvalidResponseError(CollectorConfigError):
-    """Raised when a real API response cannot be parsed into supported records."""
+    """Raised when a real or fixture API response cannot be parsed."""
 
 
 class UnsupportedSeriesError(CollectorConfigError):
@@ -44,6 +44,14 @@ class UnsupportedReportCodeError(CollectorConfigError):
 
 class MissingCorpCodeMappingError(CollectorConfigError):
     """Raised when a stock code cannot be resolved to an OpenDART corp_code."""
+
+
+class UnsupportedMarketDataTypeError(CollectorConfigError):
+    """Raised when a market data type is outside the supported MVP allowlist."""
+
+
+class UnsupportedSymbolError(CollectorConfigError):
+    """Raised when a symbol is not configured for the controlled MVP adapter."""
 
 
 def network_enabled() -> bool:
@@ -87,12 +95,14 @@ def build_raw_cache_path(
     start_date: str,
     end_date: str,
     data_dir: Path = Path("data"),
+    suffix: str = "json",
 ) -> Path:
     source_dir = sanitize_cache_component(source).lower()
     series = sanitize_cache_component(series_id)
     start = sanitize_cache_component(start_date)
     end = sanitize_cache_component(end_date)
-    return data_dir / "raw" / source_dir / f"{series}_{start}_{end}.json"
+    safe_suffix = sanitize_cache_component(suffix).lower()
+    return data_dir / "raw" / source_dir / f"{series}_{start}_{end}.{safe_suffix}"
 
 
 def build_timestamped_raw_cache_path(
@@ -100,14 +110,22 @@ def build_timestamped_raw_cache_path(
     prefix: str,
     collected_at: datetime | None = None,
     data_dir: Path = Path("data"),
+    suffix: str = "json",
 ) -> Path:
     timestamp = (collected_at or utc_now()).astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     source_dir = sanitize_cache_component(source).lower()
     safe_prefix = sanitize_cache_component(prefix)
-    return data_dir / "raw" / source_dir / f"{safe_prefix}_{timestamp}.json"
+    safe_suffix = sanitize_cache_component(suffix).lower()
+    return data_dir / "raw" / source_dir / f"{safe_prefix}_{timestamp}.{safe_suffix}"
 
 
 def write_raw_response_cache(payload: Any, cache_path: Path) -> Path:
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    if isinstance(payload, str):
+        cache_path.write_text(payload, encoding="utf-8")
+    else:
+        cache_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True, default=str),
+            encoding="utf-8",
+        )
     return cache_path

@@ -1,0 +1,51 @@
+symbols:
+  - symbol: "005930"
+    name: Samsung Electronics
+    market: KOSPI
+    asset_type: stock
+    currency: KRW
+    theme_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+    thesis_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+    sector: SEMICONDUCTOR
+    aliases:
+      - Samsung
+      - Samsung Electronics Co., Ltd.
+    krx_isu_cd: KR7005930003
+  - symbol: "000660"
+    name: SK Hynix
+    market: KOSPI
+    asset_type: stock
+    currency: KRW
+    theme_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+      - AI_INFRASTRUCTURE
+    thesis_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+    sector: SEMICONDUCTOR
+    aliases:
+      - SK hynix
+      - Hynix
+    krx_isu_cd: KR7000660001
+  - symbol: KOSPI200
+    name: KOSPI 200 Index
+    market: KRX_INDEX
+    asset_type: index
+    currency: KRW
+    aliases:
+      - KOSPI 200
+    krx_index_code: "1028"
+  - symbol: SEMI_ETF_PROXY
+    name: Semiconductor ETF Proxy
+    market: KOSPI
+    asset_type: etf
+    currency: KRW
+    theme_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+      - AI_INFRASTRUCTURE
+    thesis_ids:
+      - KOR_SEMI_MEMORY_UPCYCLE
+    sector: SEMICONDUCTOR
+    aliases:
+      - Semiconductor ETF

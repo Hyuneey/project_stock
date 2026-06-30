@@ -72,6 +72,37 @@ Only summary accounts are bridged into events in the MVP: revenue, operating
 income, net income, total assets, total liabilities, and equity. The resulting
 events remain decision-support inputs only and never become broker orders.
 
+For KRX daily end-of-day market data, `timestamp` represents the market close
+observation time. The adapter assumes daily bars become available at Korea
+market close plus 15 minutes and then applies the same conservative rule:
+`available_from >= max(timestamp, market_close_plus_15_minutes, collected_at)`.
+
+## KRX Daily Market Data Contract
+
+KRX daily market data is stored in `MarketTimeSeries`:
+
+- `symbol`: configured symbol such as `005930`, `000660`, `KOSPI200`, or an ETF
+  proxy.
+- `timestamp`: daily market close observation timestamp.
+- `frequency`: `daily`.
+- `open`, `high`, `low`, `close`: OHLC fields when provided.
+- `volume`: traded volume when provided.
+- `value`: traded value or index value when applicable.
+- `adjusted_flag`: whether the row is adjusted.
+- `source_id`: `KRX`.
+- `collected_at`: system collection timestamp.
+- `available_from`: earliest safe downstream-use timestamp.
+- `metadata_json`: symbol config fields, asset type, raw cache path, source, and
+  raw symbol lineage.
+
+`configs/krx.symbols.example.yaml` controls the allowed symbol universe. Each
+entry includes `symbol`, `name`, `market`, `asset_type`, `currency`, optional
+theme and thesis IDs, optional sector, aliases, and optional KRX query codes.
+
+Application-level dedupe skips existing KRX rows with the same `source_id`,
+`symbol`, `timestamp`, and `frequency`. Raw real responses are cached under
+`data/raw/krx/` and cache paths are stored in row metadata when available.
+
 ## Event Normalization Contract
 
 Every normalized event must include:

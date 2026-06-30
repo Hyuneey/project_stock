@@ -49,7 +49,7 @@ from project_stock.ingest.dart import (
 )
 from project_stock.ingest.ecos import EcosCollector, load_ecos_series_config
 from project_stock.ingest.fred import FredCollector, SUPPORTED_FRED_SERIES
-from project_stock.ingest.krx import KrxCollector
+from project_stock.ingest.krx import KrxCollector, krx_doctor_payload
 from project_stock.ingest.mock import ingest_mock_data
 from project_stock.ingest.news import NewsRssCollector
 from project_stock.ingest.opendart_financials import OpenDartFinancialCollector
@@ -574,6 +574,91 @@ def ingest_krx_mock(
     init_database(db_url)
     with session_scope(db_url) as session:
         result = KrxCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def krx_doctor(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    symbol_config: Path = typer.Option(Path("configs/krx.symbols.example.yaml"), "--symbol-config"),
+) -> None:
+    _echo_json(krx_doctor_payload(db_url, symbol_config))
+
+
+@app.command()
+def fetch_krx_daily(
+    symbol: str = typer.Option(..., "--symbol"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    symbol_config: Path = typer.Option(Path("configs/krx.symbols.example.yaml"), "--symbol-config"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    try:
+        records = KrxCollector().fetch_daily(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            symbol_config=symbol_config,
+            cache_raw=cache_raw,
+        )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "source_id": "KRX",
+            "record_count": len(records),
+            "market_time_series": [record.model_dump(mode="json") for record in records],
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def ingest_krx_daily(
+    symbol: str = typer.Option(..., "--symbol"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    symbol_config: Path = typer.Option(Path("configs/krx.symbols.example.yaml"), "--symbol-config"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = KrxCollector().ingest_daily(
+                session,
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                symbol_config=symbol_config,
+                cache_raw=cache_raw,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_krx_daily_fixture(
+    fixture: Path = typer.Option(..., "--fixture"),
+    symbol: str = typer.Option(..., "--symbol"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    symbol_config: Path = typer.Option(Path("configs/krx.symbols.example.yaml"), "--symbol-config"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = KrxCollector().ingest_daily(
+            session,
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            symbol_config=symbol_config,
+            fixture=fixture,
+            cache_raw=False,
+        )
     _echo_json(result.model_dump(mode="json"))
 
 

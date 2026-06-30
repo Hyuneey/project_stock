@@ -1,0 +1,28 @@
+{
+  "records": [
+    {
+      "TRD_DD": "2026/06/26",
+      "ISU_SRT_CD": "005930",
+      "ISU_ABBRV": "Samsung Electronics",
+      "TDD_OPNPRC": "69,800",
+      "TDD_HGPRC": "70,400",
+      "TDD_LWPRC": "69,200",
+      "TDD_CLSPRC": "70,000",
+      "ACC_TRDVOL": "10,000,000",
+      "ACC_TRDVAL": "700,000,000,000",
+      "collected_at": "2026-06-26T07:00:00+00:00"
+    },
+    {
+      "TRD_DD": "2026/06/29",
+      "ISU_SRT_CD": "005930",
+      "ISU_ABBRV": "Samsung Electronics",
+      "TDD_OPNPRC": "72,000",
+      "TDD_HGPRC": "73,800",
+      "TDD_LWPRC": "71,900",
+      "TDD_CLSPRC": "73,500",
+      "ACC_TRDVOL": "13,000,000",
+      "ACC_TRDVAL": "955,500,000,000",
+      "collected_at": "2026-06-29T07:00:00+00:00"
+    }
+  ]
+}
