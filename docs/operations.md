@@ -190,6 +190,25 @@ printing only; they do not start a browser or server.
 Dashboard sections are read-only views over existing operational outputs. They
 must not mutate audit rows, fetch external data, or create live trading records.
 
+## Real-Data Smoke Workflow
+
+`run-real-data-smoke-fixture` runs an offline end-to-end check over the official
+adapter contracts:
+
+1. Validate `configs/real_data_smoke.kor_semi.example.yaml` and safety limits.
+2. Ingest fixture-backed FRED, ECOS, OpenDART disclosure, OpenDART financial,
+   and KRX records with duplicate checks.
+3. Normalize document, indicator, market, and financial events.
+4. Generate and append thesis-linked evidence.
+5. Evaluate thesis states.
+6. Run portfolio review when a portfolio fixture is configured.
+7. Render `real_data_smoke_report_<smoke_id>_<mode>.md`.
+
+`run-real-data-smoke --dry-run` performs only config and readiness checks.
+`run-real-data-smoke` without `--dry-run` is real mode and fails unless
+`PROJECT_STOCK_ALLOW_NETWORK=true` and required FRED, ECOS, and OpenDART keys
+are present. Real mode is bounded by `max_days` and `max_records`.
+
 ## Real Data Activation Workflow
 
 FRED and ECOS real adapters are opt-in. The normal test suite and local demos

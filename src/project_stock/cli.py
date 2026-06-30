@@ -64,6 +64,11 @@ from project_stock.operations.review_loop import (
     run_daily_review_loop as run_daily_review_loop_flow,
     run_intraday_review_loop as run_intraday_review_loop_flow,
 )
+from project_stock.operations.real_data_smoke import (
+    DEFAULT_REAL_DATA_SMOKE_CONFIG,
+    real_data_smoke_doctor_payload,
+    run_real_data_smoke as run_real_data_smoke_flow,
+)
 from project_stock.portfolio.review import (
     review_portfolio as review_portfolio_flow,
     run_portfolio_review_demo as run_portfolio_review_demo_flow,
@@ -193,6 +198,70 @@ def opendart_doctor(
             "warning": "Decision support only: no broker execution, no auto-trading, no LLM trade decisions.",
         }
     )
+
+
+@app.command()
+def real_data_smoke_doctor(
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+) -> None:
+    try:
+        payload = real_data_smoke_doctor_payload(config)
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(payload)
+
+
+@app.command()
+def run_real_data_smoke(
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    try:
+        if dry_run:
+            result = run_real_data_smoke_flow(
+                config,
+                mode="dry_run",
+                thesis_dir=thesis_dir,
+                scenario_dir=scenario_dir,
+            )
+        else:
+            init_database(db_url)
+            with session_scope(db_url) as session:
+                result = run_real_data_smoke_flow(
+                    config,
+                    mode="real",
+                    session=session,
+                    thesis_dir=thesis_dir,
+                    scenario_dir=scenario_dir,
+                )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_real_data_smoke_fixture(
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = run_real_data_smoke_flow(
+                config,
+                mode="fixture",
+                session=session,
+                thesis_dir=thesis_dir,
+                scenario_dir=scenario_dir,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
 
 
 @app.command()
