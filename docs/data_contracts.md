@@ -111,6 +111,42 @@ Registered official source IDs:
 - `KRX`
 - `NEWS_RSS`
 
+## Operational Review Result Contracts
+
+`DailyReviewResult` summarizes one close-of-day review pass:
+
+- `as_of`: review date.
+- `inserted_raw_counts`: inserted mock source records by source ID.
+- `inserted_event_count`: normalized events inserted during this run.
+- `mapped_entity_count`: EventEntity rows inserted during normalization.
+- `evidence_candidate_count`: generated evidence candidates.
+- `appended_evidence_count`: newly appended EvidenceLedger rows.
+- `skipped_duplicate_evidence_count`: evidence candidates skipped by dedupe.
+- `scenario_match_count`: matched scenario count after metric integration.
+- `decision_log_count`: DecisionLog rows appended by the loop.
+- `memo_path`: rendered markdown memo path.
+- `warnings`: non-fatal operational warnings.
+
+The schema also carries memo-supporting details: new events by type, evidence
+counts by thesis and stance, matched scenario diagnostics, and playbook results.
+
+`IntradayReviewResult` summarizes one emergency review pass:
+
+- `event_id`: normalized or reused emergency event.
+- `emergency_level`: EIS level from `E0` to `E5`.
+- `emergency_score`: numeric Emergency Impact Score.
+- `matched_scenarios`: deterministic scenario match diagnostics.
+- `allowed_actions`: risk-review actions only, never broker orders.
+- `forbidden_actions`: prohibited actions such as LLM-directed trade decisions.
+- `appended_evidence_count`: newly appended EvidenceLedger rows.
+- `decision_log_count`: DecisionLog rows appended by the loop.
+- `memo_path`: rendered markdown memo path.
+- `thesis_action`: defaults to `defer_to_close_review`.
+
+Repeated reviews may append new DecisionLog rows. Duplicate evidence for the
+same event/thesis/scenario/evidence type must be skipped and recorded in
+DecisionLog metadata.
+
 ## Scenario Trigger Contract
 
 Thesis, scenario, and playbook YAML files are validated with Pydantic schemas.

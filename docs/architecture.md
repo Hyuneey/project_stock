@@ -14,7 +14,7 @@ flowchart LR
   C --> D["Thesis relevance engine"]
   D --> E["EvidenceCandidate scoring"]
   E --> F["EvidenceLedger append"]
-  B --> G["Scenario matcher"]
+  F --> G["Scenario matcher"]
   G --> H["Playbook executor"]
   H --> I["DecisionLog append"]
   I --> J["Markdown memo"]
@@ -86,6 +86,26 @@ The Intraday Emergency Sentinel accepts a single urgent event plus current
 metrics and exposure context. It computes the Emergency Impact Score, matches
 YAML scenarios, executes playbooks, appends trigger/evidence/decision records,
 and returns allowed and forbidden risk actions.
+
+## Operational Review Loops
+
+The operational service layer connects the MVP components into review workflows:
+
+- Daily review: register sources, optionally ingest the offline official mock
+  bundle, normalize events, append deduplicated evidence, derive deterministic
+  review metrics from events/evidence, match scenarios, evaluate playbooks at
+  review-only emergency level, append a `daily_review` DecisionLog row, and
+  render a daily memo.
+- Intraday review: create or reuse a stable emergency event, map entities,
+  append deduplicated evidence candidates for that event, merge explicit metrics
+  with event/evidence hints, match scenarios, score EIS, execute playbooks,
+  append an `emergency_risk_review` DecisionLog row, and render an emergency
+  memo.
+
+Repeated daily runs skip duplicate source records, normalized events, and
+evidence. Repeated intraday runs against the same emergency fixture reuse the
+same event lineage and skip duplicate evidence. DecisionLog entries remain
+append-only and can be repeated to show each operational review pass.
 
 ## Scenario Matching
 
