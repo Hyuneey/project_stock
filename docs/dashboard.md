@@ -27,6 +27,12 @@ review loop over mock fixtures, runs thesis review, runs portfolio review, runs
 backtest validation, writes memo/report artifacts, and prints a dashboard launch
 command.
 
+To inspect smoke pipeline outputs, run the fixture smoke against the same DB:
+
+```bash
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
 ## Launch
 
 Print the launch command:
@@ -86,6 +92,12 @@ emergency level if available.
 Shows the latest `backtest_validation_report_*.md` artifact from the memo
 directory, parsed return/risk metrics, diagnostic metrics, and point-in-time
 warnings.
+
+### Real-Data Smoke Outputs
+
+Smoke pipeline rows appear in the existing event, evidence, thesis state, and
+portfolio sections when the dashboard points at the same SQLite DB. The smoke
+report itself appears in memo artifacts under the configured memo directory.
 
 ## Limitations
 

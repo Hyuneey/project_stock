@@ -221,6 +221,23 @@ daily-data only and does not implement tick data, order books, intraday minute
 data, broker order routing, live account sync, derivatives data, auto-trading,
 or LLM-directed investment decisions.
 
+## Real-Data Smoke Pipeline
+
+The real-data smoke pipeline validates that FRED, ECOS, OpenDART disclosure,
+OpenDART financial, and KRX adapters can run together for a bounded KOR_SEMI
+demo. Dry-run and fixture modes are fully offline.
+
+```bash
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Real mode requires `PROJECT_STOCK_ALLOW_NETWORK=true` plus the configured FRED,
+ECOS, and OpenDART API keys. Smoke runs are capped by `max_days` and
+`max_records`, write a markdown report under the configured memo directory, and
+remain decision support only.
+
 ## Event Normalization Demo
 
 The normalization demo initializes the DB, registers sources, ingests the
@@ -277,6 +294,9 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock fetch-krx-daily`: fetches opt-in KRX daily market data preview rows.
 - `project-stock ingest-krx-daily`: ingests opt-in KRX daily market data rows.
 - `project-stock ingest-krx-daily-fixture`: ingests KRX daily market fixture rows offline.
+- `project-stock real-data-smoke-doctor`: validates real-data smoke config and readiness offline.
+- `project-stock run-real-data-smoke`: runs dry-run or opt-in real real-data smoke flow.
+- `project-stock run-real-data-smoke-fixture`: runs the offline fixture-backed real-data smoke flow.
 - `project-stock normalize-events`: normalizes all collected records into events.
 - `project-stock normalize-financial-events`: normalizes summary financial rows into events.
 - `project-stock normalize-events-from-documents`: normalizes RawDocument records.

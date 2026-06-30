@@ -1,0 +1,82 @@
+# Real Data Smoke Report
+
+Smoke ID: {{ result.smoke_id }}
+Mode: {{ result.mode }}
+
+{{ no_auto_trade_disclaimer }}
+
+## Source Readiness
+
+| Source | Adapter | Available | Required Keys | Reason |
+|---|---:|---:|---|---|
+{% for status in source_statuses %}
+| {{ status.source_id }} | {{ status.adapter }} | {{ status.available }} | {{ status.required_api_keys | join(" or ") }} | {{ status.reason }} |
+{% endfor %}
+
+## Inserted Counts
+
+{% if inserted_counts %}
+{% for key, count in inserted_counts.items() %}
+- {{ key }}: {{ count }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Skipped Duplicate Counts
+
+{% if skipped_duplicate_counts %}
+{% for key, count in skipped_duplicate_counts.items() %}
+- {{ key }}: {{ count }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Events By Type
+
+{% if events_by_type %}
+{% for key, count in events_by_type.items() %}
+- {{ key }}: {{ count }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Evidence By Thesis
+
+{% if evidence_by_thesis %}
+{% for key, count in evidence_by_thesis.items() %}
+- {{ key }}: {{ count }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Thesis States
+
+{% if thesis_states %}
+{% for key, state in thesis_states.items() %}
+- {{ key }}: {{ state }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Warnings
+
+{% if warnings %}
+{% for warning in warnings %}
+- {{ warning }}
+{% endfor %}
+{% else %}
+- none
+{% endif %}
+
+## Point-In-Time Limitations
+
+The smoke pipeline preserves adapter `available_from` timestamps and keeps real
+runs bounded by configured `max_days` and `max_records`. It is still a smoke
+check, not a full vintage database. Source release calendars, revisions, market
+holidays, and provider-specific publication lags require additional validation
+before research use.

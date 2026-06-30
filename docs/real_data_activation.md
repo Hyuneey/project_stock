@@ -49,6 +49,7 @@ a point-in-time caution, and the no-auto-trade warning.
 
 ```bash
 project-stock opendart-doctor
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
 ```
 
 It prints the network flag, whether `DART_API_KEY` or `OPEN_DART_API_KEY` is
@@ -185,6 +186,31 @@ decisions.
 
 See `docs/opendart_adapter.md`, `docs/opendart_financials.md`, and
 `docs/krx_adapter.md` for source-specific scope and limitations.
+
+## Real-Data Smoke Pipeline
+
+The smoke pipeline connects FRED, ECOS, OpenDART disclosure, OpenDART financial,
+and KRX adapters into one bounded KOR_SEMI review flow.
+
+Dry-run validates config and readiness without network or database writes:
+
+```bash
+project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
+```
+
+Fixture mode is fully offline and writes rows plus a smoke memo:
+
+```bash
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Real mode requires explicit network opt-in and required API keys:
+
+```bash
+PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+The smoke config enforces `max_days` and `max_records` so the run stays small.
 
 ## Raw Response Cache
 
