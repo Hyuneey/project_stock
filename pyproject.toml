@@ -27,6 +27,9 @@ dev = [
   "pytest>=8.0",
   "ruff>=0.5",
 ]
+dashboard = [
+  "streamlit>=1.36",
+]
 
 [project.scripts]
 project-stock = "project_stock.cli:app"

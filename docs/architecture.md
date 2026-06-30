@@ -19,6 +19,12 @@ flowchart LR
   J --> M["Portfolio exposure review"]
   J --> N["Backtest validation"]
   M --> N
+  O["Dashboard MVP"] --> L
+  K --> O
+  F --> O
+  H --> O
+  M --> O
+  N --> O
   G --> I["Playbook executor"]
   H --> J["ThesisStateSnapshot append"]
   I --> K["DecisionLog append"]
@@ -128,6 +134,17 @@ ignored until they become available. Performance metrics and diagnostic
 usefulness metrics are written to markdown reports. The layer never creates
 live orders, broker execution payloads, or LLM-directed investment decisions.
 
+## Dashboard Layer
+
+The dashboard layer is a local Streamlit read surface over SQLite rows and
+markdown artifacts. Query helpers in `project_stock.dashboard.queries` summarize
+table counts, recent events, evidence by thesis and stance, latest thesis state
+snapshots, portfolio review DecisionLog metadata, scenario trigger logs,
+emergency review metadata, and latest backtest report artifacts.
+
+The dashboard performs no ingestion, no external API calls, and no broker
+integration. Empty tables return empty sections instead of runtime failures.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
@@ -171,6 +188,9 @@ review memo.
 The backtest validation workflow runs independently from live data ingestion. It
 loads fixture market returns and point-in-time signals, computes benchmark and
 overlay policy metrics, and renders a validation report.
+
+The dashboard workflow runs after any demo or operational review. It reads the
+same SQLite database and memo directory to visualize outputs for human review.
 
 ## Scenario Matching
 

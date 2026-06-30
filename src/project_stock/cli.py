@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 import json
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any
 
 import typer
@@ -70,10 +72,26 @@ from project_stock.playbooks.loader import load_playbook_dir
 app = typer.Typer(no_args_is_help=True)
 console = Console()
 DEFAULT_OFFICIAL_FIXTURE_DIR = Path("tests/fixtures/official")
+DEFAULT_DASHBOARD_APP = Path(__file__).resolve().parent / "dashboard" / "app.py"
 
 
 def _echo_json(payload: Any) -> None:
-    console.print(json.dumps(payload, indent=2, sort_keys=True, default=str))
+    console.print(json.dumps(payload, indent=2, sort_keys=True, default=str), markup=False)
+
+
+def _dashboard_command(db_url: str, memo_dir: Path) -> list[str]:
+    return [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(DEFAULT_DASHBOARD_APP),
+        "--",
+        "--db-url",
+        db_url,
+        "--memo-dir",
+        str(memo_dir),
+    ]
 
 
 @app.command()
@@ -545,6 +563,91 @@ def render_backtest_report(
             "benchmark_relative_return": result.metrics.benchmark_relative_return,
             "point_in_time_warnings": report.point_in_time_warnings,
             "no_auto_trade": report.no_auto_trade,
+        }
+    )
+
+
+@app.command()
+def run_dashboard(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    launch: bool = typer.Option(False, "--launch"),
+) -> None:
+    command = _dashboard_command(db_url, memo_dir)
+    if launch:
+        subprocess.run(command, check=False)
+        return
+    _echo_json(
+        {
+            "status": "launch_command",
+            "command": " ".join(command),
+            "db_url": db_url,
+            "memo_dir": str(memo_dir),
+            "install": "python -m pip install -e \".[dev,dashboard]\"",
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def prepare_dashboard_demo(
+    as_of: str = typer.Option("2026-06-29", "--as-of"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(Path("scenarios"), "--scenario-dir"),
+    playbook_dir: Path = typer.Option(Path("playbooks"), "--playbook-dir"),
+    fixture_dir: Path = typer.Option(DEFAULT_OFFICIAL_FIXTURE_DIR, "--fixture-dir"),
+    portfolio_fixture: Path = typer.Option(
+        Path("tests/fixtures/portfolio_holdings_core_satellite.json"),
+        "--portfolio-fixture",
+    ),
+    portfolio_config: Path = typer.Option(Path("configs/portfolio.example.yaml"), "--portfolio-config"),
+) -> None:
+    init_database(db_url)
+    review_date = date.fromisoformat(as_of)
+    with session_scope(db_url) as session:
+        daily_result = run_daily_review_loop_flow(
+            as_of=review_date,
+            db_session=session,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            playbook_dir=playbook_dir,
+            fixture_dir=fixture_dir,
+            memo_dir=memo_dir,
+            ingest_mock=True,
+        )
+        thesis_result = run_thesis_review_demo_flow(
+            session=session,
+            as_of=review_date,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            fixture_dir=fixture_dir,
+            memo_dir=memo_dir,
+        )
+        portfolio_result = run_portfolio_review_demo_flow(
+            session=session,
+            as_of=review_date,
+            portfolio_fixture=portfolio_fixture,
+            portfolio_config=portfolio_config,
+            memo_dir=memo_dir,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+        )
+    backtest_result, backtest_report = run_backtest_demo_flow(memo_dir=memo_dir)
+    launch_command = _dashboard_command(db_url, memo_dir)
+    _echo_json(
+        {
+            "status": "ready",
+            "db_url": db_url,
+            "memo_dir": str(memo_dir),
+            "daily_memo_path": daily_result.memo_path,
+            "thesis_memo_path": thesis_result.memo_path,
+            "portfolio_memo_path": portfolio_result.memo_path,
+            "backtest_report_path": backtest_report.report_path,
+            "backtest_id": backtest_result.backtest_id,
+            "dashboard_command": " ".join(launch_command),
+            "no_auto_trade": True,
         }
     )
 
