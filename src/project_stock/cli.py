@@ -28,6 +28,7 @@ from project_stock.db.models import RawDocument
 from project_stock.db.session import session_scope
 from project_stock.events.classifier import event_from_document
 from project_stock.events.mapper import map_entities
+from project_stock.events.financials import normalize_financial_events as normalize_financial_events_flow
 from project_stock.events.normalization import (
     detect_market_events as detect_market_events_flow,
     normalize_events as normalize_events_flow,
@@ -51,6 +52,7 @@ from project_stock.ingest.fred import FredCollector, SUPPORTED_FRED_SERIES
 from project_stock.ingest.krx import KrxCollector
 from project_stock.ingest.mock import ingest_mock_data
 from project_stock.ingest.news import NewsRssCollector
+from project_stock.ingest.opendart_financials import OpenDartFinancialCollector
 from project_stock.ingest.official_bundle import ingest_official_mock_bundle as ingest_bundle
 from project_stock.ingest.real_data import (
     NETWORK_ENV_VAR,
@@ -333,6 +335,98 @@ def ingest_opendart_disclosures_fixture(
 
 
 @app.command()
+def fetch_opendart_financials(
+    corp_code: str | None = typer.Option(None, "--corp-code"),
+    stock_code: str | None = typer.Option(None, "--stock-code"),
+    bsns_year: str = typer.Option(..., "--bsns-year"),
+    reprt_code: str = typer.Option(..., "--reprt-code"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    try:
+        records = OpenDartFinancialCollector().fetch_financials(
+            corp_code=corp_code,
+            stock_code=stock_code,
+            bsns_year=bsns_year,
+            reprt_code=reprt_code,
+            corp_code_config=corp_code_config,
+            cache_raw=cache_raw,
+        )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "source_id": "OPEN_DART",
+            "record_count": len(records),
+            "line_items": [record.model_dump(mode="json") for record in records],
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def ingest_opendart_financials(
+    corp_code: str | None = typer.Option(None, "--corp-code"),
+    stock_code: str | None = typer.Option(None, "--stock-code"),
+    bsns_year: str = typer.Option(..., "--bsns-year"),
+    reprt_code: str = typer.Option(..., "--reprt-code"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = OpenDartFinancialCollector().ingest_financials(
+                session,
+                corp_code=corp_code,
+                stock_code=stock_code,
+                bsns_year=bsns_year,
+                reprt_code=reprt_code,
+                corp_code_config=corp_code_config,
+                cache_raw=cache_raw,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def ingest_opendart_financials_fixture(
+    fixture: Path = typer.Option(..., "--fixture"),
+    corp_code: str | None = typer.Option(None, "--corp-code"),
+    stock_code: str | None = typer.Option(None, "--stock-code"),
+    bsns_year: str = typer.Option(..., "--bsns-year"),
+    reprt_code: str = typer.Option(..., "--reprt-code"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    corp_code_config: Path = typer.Option(
+        Path("configs/opendart.corp_codes.example.yaml"),
+        "--corp-code-config",
+    ),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = OpenDartFinancialCollector().ingest_financials(
+            session,
+            corp_code=corp_code,
+            stock_code=stock_code,
+            bsns_year=bsns_year,
+            reprt_code=reprt_code,
+            corp_code_config=corp_code_config,
+            fixture=fixture,
+            cache_raw=False,
+        )
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
 def ingest_ecos_mock(
     fixture: Path = typer.Option(..., "--fixture"),
     db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
@@ -529,6 +623,14 @@ def normalize_events(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> 
     init_database(db_url)
     with session_scope(db_url) as session:
         result = normalize_events_flow(session)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def normalize_financial_events(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        result = normalize_financial_events_flow(session)
     _echo_json(result.model_dump(mode="json"))
 
 

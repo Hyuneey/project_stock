@@ -43,8 +43,10 @@ repository methods. Mock mode reads local fixtures and does not require API keys
 Real fetch paths are placeholders that raise clear configuration errors when
 required API keys are absent.
 
-OpenDART and News/RSS items enter `RawDocument` first. ECOS and FRED records
-enter `IndicatorObservation`. KRX records enter `MarketTimeSeries`. All collector
+OpenDART and News/RSS disclosure or headline items enter `RawDocument` first.
+OpenDART single-company financial statement line items enter
+`FinancialStatementLineItem`. ECOS and FRED records enter
+`IndicatorObservation`. KRX records enter `MarketTimeSeries`. All collector
 records carry `collected_at` and `available_from`; repository writes enforce that
 `available_from` is not earlier than known publication, release, timestamp, or
 collection times.
@@ -55,6 +57,9 @@ The event normalization layer converts collected records into normalized
 investment events:
 
 - `RawDocument` from OpenDART and News/RSS becomes disclosure or headline events.
+- `FinancialStatementLineItem` from OpenDART becomes summary financial events
+  for supported accounts such as revenue, operating income, net income, assets,
+  liabilities, and equity.
 - `IndicatorObservation` from ECOS and FRED becomes macro release or surprise events.
 - `MarketTimeSeries` from KRX or future market sources becomes large-move events
   when prior observations and threshold rules allow deterministic detection.

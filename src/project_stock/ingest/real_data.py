@@ -38,6 +38,14 @@ class UnsupportedQueryError(CollectorConfigError):
     """Raised when a requested query is outside the MVP-supported scope."""
 
 
+class UnsupportedReportCodeError(CollectorConfigError):
+    """Raised when a report code is outside the supported MVP allowlist."""
+
+
+class MissingCorpCodeMappingError(CollectorConfigError):
+    """Raised when a stock code cannot be resolved to an OpenDART corp_code."""
+
+
 def network_enabled() -> bool:
     return os.getenv(NETWORK_ENV_VAR, "false").strip().lower() in TRUE_VALUES
 

@@ -11,6 +11,7 @@ from project_stock.db.models import (
     Event,
     EventEntity,
     EvidenceLedger,
+    FinancialStatementLineItem,
     IndicatorObservation,
     MarketTimeSeries,
     RawDocument,
@@ -22,6 +23,7 @@ from project_stock.schemas.decisions import DecisionCreate
 from project_stock.schemas.documents import RawDocumentCreate
 from project_stock.schemas.events import EventCreate
 from project_stock.schemas.evidence import EvidenceCreate
+from project_stock.schemas.financials import FinancialStatementLineItemCreate
 from project_stock.schemas.indicators import IndicatorObservationCreate
 from project_stock.schemas.market import MarketTimeSeriesCreate
 from project_stock.normalize.time import safe_available_from
@@ -130,6 +132,50 @@ class Repository:
         self.session.add(observation)
         self.session.flush()
         return observation
+
+    def find_financial_statement_line_item(
+        self,
+        corp_code: str,
+        bsns_year: str,
+        reprt_code: str,
+        fs_div: str,
+        sj_div: str,
+        account_name: str,
+    ) -> FinancialStatementLineItem | None:
+        statement = select(FinancialStatementLineItem).where(
+            FinancialStatementLineItem.corp_code == corp_code,
+            FinancialStatementLineItem.bsns_year == bsns_year,
+            FinancialStatementLineItem.reprt_code == reprt_code,
+            FinancialStatementLineItem.fs_div == fs_div,
+            FinancialStatementLineItem.sj_div == sj_div,
+            FinancialStatementLineItem.account_name == account_name,
+        )
+        return self.session.scalars(statement).first()
+
+    def add_financial_statement_line_item(
+        self, line_item_create: FinancialStatementLineItemCreate
+    ) -> FinancialStatementLineItem:
+        collected_at = line_item_create.collected_at or utc_now()
+        item = FinancialStatementLineItem(
+            statement_id=line_item_create.statement_id or make_id("FIN"),
+            corp_code=line_item_create.corp_code,
+            stock_code=line_item_create.stock_code,
+            bsns_year=line_item_create.bsns_year,
+            reprt_code=line_item_create.reprt_code,
+            fs_div=line_item_create.fs_div,
+            sj_div=line_item_create.sj_div,
+            account_name=line_item_create.account_name,
+            current_amount=line_item_create.current_amount,
+            previous_amount=line_item_create.previous_amount,
+            currency=line_item_create.currency,
+            source_id=line_item_create.source_id,
+            collected_at=collected_at,
+            available_from=safe_available_from(line_item_create.available_from, collected_at),
+            metadata_json=line_item_create.metadata_json or {},
+        )
+        self.session.add(item)
+        self.session.flush()
+        return item
 
     def add_market_time_series(self, series_create: MarketTimeSeriesCreate) -> MarketTimeSeries:
         collected_at = series_create.collected_at or utc_now()
@@ -329,6 +375,18 @@ class Repository:
         return list(
             self.session.scalars(
                 select(IndicatorObservation).order_by(IndicatorObservation.indicator_id)
+            ).all()
+        )
+
+    def list_financial_statement_line_items(self) -> list[FinancialStatementLineItem]:
+        return list(
+            self.session.scalars(
+                select(FinancialStatementLineItem).order_by(
+                    FinancialStatementLineItem.corp_code,
+                    FinancialStatementLineItem.bsns_year,
+                    FinancialStatementLineItem.reprt_code,
+                    FinancialStatementLineItem.account_name,
+                )
             ).all()
         )
 

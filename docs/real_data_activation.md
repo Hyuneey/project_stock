@@ -110,8 +110,8 @@ Use `--series-config` to point to a private config file.
 ## OpenDART Disclosure List
 
 OpenDART disclosure list ingestion uses `DART_API_KEY` or `OPEN_DART_API_KEY`.
-The scope is disclosure list metadata only. Full report body download, XBRL
-parsing, and financial statement extraction are deferred.
+The scope is disclosure list metadata only. Full report body download and XBRL
+parsing are deferred.
 
 Fixture ingestion remains offline:
 
@@ -126,8 +126,30 @@ project-stock fetch-opendart-disclosures --stock-code 005930 --bgn-de 20260601 -
 project-stock ingest-opendart-disclosures --stock-code 005930 --bgn-de 20260601 --end-de 20260630
 ```
 
-See `docs/opendart_adapter.md` for scope, corp-code config, cache behavior,
-available-from handling, and deferred report body/XBRL work.
+## OpenDART Financial Statements
+
+The financial adapter supports single-company financial statement rows for
+selected companies and report periods.
+
+Fixture ingestion remains offline:
+
+```bash
+project-stock ingest-opendart-financials-fixture --fixture tests/fixtures/opendart_financial_statement_response.json --stock-code 005930 --bsns-year 2026 --reprt-code 11013
+```
+
+Real preview and ingestion are available only after explicit network opt-in:
+
+```bash
+project-stock fetch-opendart-financials --stock-code 005930 --bsns-year 2026 --reprt-code 11013
+project-stock ingest-opendart-financials --stock-code 005930 --bsns-year 2026 --reprt-code 11013
+```
+
+Supported report codes are `11013`, `11012`, `11014`, and `11011`. The adapter
+does not download XBRL, parse full report bodies, parse consolidated footnotes,
+or run production multi-company batch jobs.
+
+See `docs/opendart_adapter.md` and `docs/opendart_financials.md` for scope,
+corp-code config, cache behavior, available-from handling, and deferred work.
 
 ## Raw Response Cache
 
@@ -136,6 +158,7 @@ Real fetches save raw JSON by default:
 - FRED: `data/raw/fred/`
 - ECOS: `data/raw/ecos/`
 - OpenDART disclosure list: `data/raw/opendart/`
+- OpenDART financial statements: `data/raw/opendart/financial/`
 
 Downloaded data remains ignored by Git through `data/raw/*`. Cache paths are
 stored in `metadata_json["raw_cache_path"]` when available.
@@ -150,11 +173,15 @@ backtesting, but it is not a full vintage database. Before using real data for
 research, verify source-specific release calendars, publication lags, revisions,
 and vintage behavior.
 
+OpenDART financial statement rows do not include exact API release timestamps in
+the MVP parser, so `available_from` is set no earlier than local collection time.
+
 ## Offline Tests
 
 The test suite uses fixture parsers for FRED observation responses, ECOS
-StatisticSearch responses, and OpenDART disclosure list responses. It does not
-require network access or real API keys.
+StatisticSearch responses, OpenDART disclosure list responses, and OpenDART
+financial statement responses. It does not require network access or real API
+keys.
 
 The real adapter boundary is tested with:
 

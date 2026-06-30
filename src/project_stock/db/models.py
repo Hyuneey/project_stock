@@ -85,6 +85,27 @@ class IndicatorObservation(Base):
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 
+class FinancialStatementLineItem(Base):
+    __tablename__ = "financial_statement_line_items"
+
+    statement_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    corp_code: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    stock_code: Mapped[str | None] = mapped_column(String(20), index=True)
+    bsns_year: Mapped[str] = mapped_column(String(4), nullable=False, index=True)
+    reprt_code: Mapped[str] = mapped_column(String(5), nullable=False, index=True)
+    fs_div: Mapped[str] = mapped_column(String(20), nullable=False)
+    sj_div: Mapped[str] = mapped_column(String(20), nullable=False)
+    account_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    current_amount: Mapped[float] = mapped_column(Float, nullable=False)
+    previous_amount: Mapped[float | None] = mapped_column(Float)
+    currency: Mapped[str | None] = mapped_column(String(40))
+    source_id: Mapped[str | None] = mapped_column(ForeignKey("sources.source_id"))
+    collected_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    available_from: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON)
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
 class Event(Base):
     __tablename__ = "events"
 

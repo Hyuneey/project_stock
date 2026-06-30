@@ -26,6 +26,11 @@ auto-trading instructions, or LLM investment decisions.
 | `rates_shock_move` | US10Y moved beyond configured absolute threshold. | `market_time_series` | symbol, timestamp, absolute_move | macro_factor | Confirms rate shock scenarios. |
 | `sector_relative_strength_move` | SOX moved beyond configured semiconductor threshold. | `market_time_series` | symbol, timestamp, pct_move | asset, sector, theme | Confirms semiconductor relative strength deterioration or recovery. |
 | `volatility_shock_move` | VIX moved beyond configured volatility threshold. | `market_time_series` | symbol, timestamp, pct_move | asset, macro_factor | Confirms market stress scenarios. |
+| `financial_statement_received` | Supported OpenDART financial summary account was received without a stronger directional rule. | `financial_statement_line_items` | company, business year, report code, account, amount, available_from | company, sector, theme | Neutral thesis review input. |
+| `revenue_growth_candidate` | Revenue summary account increased versus the previous period. | `financial_statement_line_items` | current amount, previous amount, pct_change | company, sector, theme | Supports earnings or demand follow-through review. |
+| `operating_income_growth_candidate` | Operating income increased versus the previous period. | `financial_statement_line_items` | current amount, previous amount, pct_change | company, sector, theme | Supports margin or cycle improvement review. |
+| `margin_pressure_candidate` | Operating income declined or turned negative versus the previous period. | `financial_statement_line_items` | current amount, previous amount, pct_change | company, sector, theme | Contradicts earnings upcycle theses or activates earnings-risk review. |
+| `leverage_change_candidate` | Liabilities or equity changed materially enough to warrant leverage review. | `financial_statement_line_items` | current amount, previous amount, pct_change | company, sector, theme | Feeds balance-sheet risk review. |
 
 ## Entity Mapping Rules
 
@@ -57,6 +62,11 @@ thesis-linked candidates:
 - `sector_news_headline` or `sector_relative_strength_move` tied to SOX,
   semiconductors, HBM, or AI infrastructure can support
   `KOR_SEMI_AI_DEMAND_BULL` when direction is positive.
+- `revenue_growth_candidate` and `operating_income_growth_candidate` can support
+  Korea semiconductor upcycle evidence when mapped to Samsung Electronics or SK
+  Hynix.
+- `margin_pressure_candidate` can contradict earnings-upcycle evidence and feed
+  earnings shock scenario review.
 
 Duplicate prevention uses source lineage first, then News/RSS checksum, then a
 close timestamp/entity window for same `event_type` and mapped entity.

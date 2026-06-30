@@ -9,6 +9,9 @@
   `available_from`.
 - `IndicatorObservation`: macro or fundamental releases with `release_at`,
   `collected_at`, `available_from`, and optional vintage fields.
+- `FinancialStatementLineItem`: OpenDART single-company financial statement
+  line items with company, period, report code, account, amount, `collected_at`,
+  and `available_from`.
 - `Event`: normalized event with scores for reliability, surprise, persistence,
   market confirmation, and `available_from`.
 - `EventEntity`: event-to-company, theme, or macro-factor mapping.
@@ -36,6 +39,38 @@ Collector writes apply the same rule for each destination:
 - Raw documents: `available_from >= max(published_at, collected_at)` when present.
 - Indicator observations: `available_from >= max(release_at, collected_at)` when present.
 - Market series: `available_from >= max(timestamp, collected_at)` when present.
+- Financial statement line items: `available_from >= collected_at` unless a
+  later linked disclosure availability timestamp is explicitly known.
+
+## Financial Statement Line Item Contract
+
+`FinancialStatementLineItem` stores normalized OpenDART single-company financial
+statement rows:
+
+- `statement_id`: internal row identifier.
+- `corp_code`: OpenDART corporation code.
+- `stock_code`: mapped exchange stock code when available.
+- `bsns_year`: business year.
+- `reprt_code`: one of `11013`, `11012`, `11014`, or `11011`.
+- `fs_div`: financial statement division from OpenDART.
+- `sj_div`: statement division from OpenDART.
+- `account_name`: raw account name, for example `매출액` or `영업이익`.
+- `current_amount`: parsed current-period amount.
+- `previous_amount`: parsed prior-period amount when provided.
+- `currency`: reported currency, defaulting to `KRW` when absent.
+- `source_id`: `OPEN_DART`.
+- `collected_at`: collection timestamp.
+- `available_from`: conservative use timestamp, not earlier than `collected_at`.
+- `metadata_json`: OpenDART fields such as `rcept_no`, report code, stock code,
+  raw cache path, source lineage, and normalized summary account when mapped.
+
+The application dedupes line items by `corp_code`, `bsns_year`, `reprt_code`,
+`fs_div`, `sj_div`, and `account_name`. Rows are company-period-account data and
+are intentionally separate from macro `IndicatorObservation` rows.
+
+Only summary accounts are bridged into events in the MVP: revenue, operating
+income, net income, total assets, total liabilities, and equity. The resulting
+events remain decision-support inputs only and never become broker orders.
 
 ## Event Normalization Contract
 

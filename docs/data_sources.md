@@ -16,6 +16,26 @@ Raw OpenDART list responses are cached under `data/raw/opendart/` by default and
 remain ignored by Git. Disclosure rows dedupe by `rcept_no` through the document
 checksum `opendart:<rcept_no>`.
 
+financial statement adapter supports the single-company financial statement
+endpoint in a controlled scope:
+
+- Inputs: `corp_code` or mapped `stock_code`, `bsns_year`, and `reprt_code`.
+- Supported report codes: `11013` 1Q, `11012` half-year, `11014` 3Q, and
+  `11011` annual.
+- Storage: `FinancialStatementLineItem`, deduped by company, year, report,
+  financial-statement division, statement division, and account name.
+- Raw cache: real responses are written under `data/raw/opendart/financial/`
+  and are ignored by git.
+
+Real OpenDART financial fetching is opt-in only. `PROJECT_STOCK_ALLOW_NETWORK`
+defaults to `false`, and real fetches require `PROJECT_STOCK_ALLOW_NETWORK=true`
+plus `DART_API_KEY` or `OPEN_DART_API_KEY`. Fixture ingestion requires no API key
+and no network.
+
+The financial adapter does not download XBRL, parse full report bodies, parse
+consolidated footnotes, run multi-company production batch jobs, execute broker
+orders, auto-trade, or let LLMs make investment decisions.
+
 ## ECOS
 
 Bank of Korea ECOS is the source for Korean macro indicators. The offline mock
@@ -58,6 +78,13 @@ FRED records normalize from `IndicatorObservation`; KRX records normalize from
 `MarketTimeSeries` when a previous observation exists for move detection. The
 normalization layer preserves source lineage in event metadata and carries
 forward safe `available_from` timestamps.
+
+OpenDART financial statement summary accounts can be normalized from
+`FinancialStatementLineItem` into events such as `financial_statement_received`,
+`revenue_growth_candidate`, `operating_income_growth_candidate`,
+`margin_pressure_candidate`, and `leverage_change_candidate`. The MVP maps only
+summary accounts such as revenue, operating income, net income, assets,
+liabilities, and equity.
 
 ## Guardrails
 
