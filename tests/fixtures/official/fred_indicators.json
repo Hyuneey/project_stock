@@ -1,0 +1,14 @@
+{
+  "records": [
+    {
+      "indicator_id": "DGS2",
+      "observation_period": "2026-06-29",
+      "value": 4.2,
+      "unit": "percent",
+      "release_at": "2026-06-29T20:00:00+00:00",
+      "collected_at": "2026-06-29T20:15:00+00:00",
+      "available_from": "2026-06-29T20:10:00+00:00",
+      "vintage_date": "2026-06-29"
+    }
+  ]
+}

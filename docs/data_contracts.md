@@ -8,7 +8,7 @@
 - `MarketTimeSeries`: market observations with `timestamp`, `collected_at`, and
   `available_from`.
 - `IndicatorObservation`: macro or fundamental releases with `release_at`,
-  `available_from`, and optional vintage fields.
+  `collected_at`, `available_from`, and optional vintage fields.
 - `Event`: normalized event with scores for reliability, surprise, persistence,
   and market confirmation.
 - `EventEntity`: event-to-company, theme, or macro-factor mapping.
@@ -30,6 +30,32 @@
 Backtests and reviews must not use records before `available_from`. When a source
 has `published_at` and `collected_at`, the conservative default is to use the
 later timestamp as the earliest safe availability time.
+
+Collector writes apply the same rule for each destination:
+
+- Raw documents: `available_from >= max(published_at, collected_at)` when present.
+- Indicator observations: `available_from >= max(release_at, collected_at)` when present.
+- Market series: `available_from >= max(timestamp, collected_at)` when present.
+
+## Collector Contract
+
+Official collectors expose `collector_id`, `source_id`, `fetch_raw`, `normalize`,
+and `ingest`. `fetch_raw` returns typed Pydantic raw-record schemas, not arbitrary
+dicts. `normalize` returns internal create schemas for `RawDocument`,
+`IndicatorObservation`, or `MarketTimeSeries`. `ingest` registers source metadata
+and writes through repository methods.
+
+API keys are read from environment variables only and are required only when a
+future real fetch is requested. Mock fixture ingestion must work without API keys
+and without network access.
+
+Registered official source IDs:
+
+- `OPEN_DART`
+- `BOK_ECOS`
+- `FRED`
+- `KRX`
+- `NEWS_RSS`
 
 ## Scenario Trigger Contract
 

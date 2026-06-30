@@ -10,13 +10,19 @@ from project_stock.db.models import (
     Event,
     EventEntity,
     EvidenceLedger,
+    IndicatorObservation,
+    MarketTimeSeries,
     RawDocument,
     ScenarioTriggerLog,
     Source,
 )
 from project_stock.schemas.decisions import DecisionCreate
+from project_stock.schemas.documents import RawDocumentCreate
 from project_stock.schemas.events import EventCreate
 from project_stock.schemas.evidence import EvidenceCreate
+from project_stock.schemas.indicators import IndicatorObservationCreate
+from project_stock.schemas.market import MarketTimeSeriesCreate
+from project_stock.normalize.time import safe_available_from
 from project_stock.utils.clock import utc_now
 from project_stock.utils.ids import make_id
 
@@ -54,22 +60,101 @@ class Repository:
         title: str,
         body_text: str,
         source_id: str | None = None,
+        url: str | None = None,
+        language: str = "en",
         published_at: datetime | None = None,
+        collected_at: datetime | None = None,
         available_from: datetime | None = None,
+        checksum: str | None = None,
+        raw_path: str | None = None,
         metadata_json: dict | None = None,
     ) -> RawDocument:
+        collected_at = collected_at or utc_now()
         doc = RawDocument(
             doc_id=make_id("DOC"),
             source_id=source_id,
             title=title,
             body_text=body_text,
+            url=url,
+            language=language,
             published_at=published_at,
-            available_from=available_from or published_at or utc_now(),
+            collected_at=collected_at,
+            available_from=safe_available_from(available_from, published_at, collected_at),
+            checksum=checksum,
+            raw_path=raw_path,
             metadata_json=metadata_json or {},
         )
         self.session.add(doc)
         self.session.flush()
         return doc
+
+    def add_raw_document_create(self, document: RawDocumentCreate) -> RawDocument:
+        return self.add_raw_document(**document.model_dump())
+
+    def find_raw_document_by_checksum(
+        self, checksum: str, source_id: str | None = None
+    ) -> RawDocument | None:
+        statement = select(RawDocument).where(RawDocument.checksum == checksum)
+        if source_id is not None:
+            statement = statement.where(RawDocument.source_id == source_id)
+        return self.session.scalars(statement).first()
+
+    def add_indicator_observation(
+        self, observation_create: IndicatorObservationCreate
+    ) -> IndicatorObservation:
+        collected_at = observation_create.collected_at or utc_now()
+        observation = IndicatorObservation(
+            observation_id=make_id("OBS"),
+            indicator_id=observation_create.indicator_id,
+            observation_period=observation_create.observation_period,
+            value=observation_create.value,
+            unit=observation_create.unit,
+            release_at=observation_create.release_at,
+            collected_at=collected_at,
+            available_from=safe_available_from(
+                observation_create.available_from,
+                observation_create.release_at,
+                collected_at,
+            ),
+            vintage_date=observation_create.vintage_date,
+            source_id=observation_create.source_id,
+            consensus=observation_create.consensus,
+            previous=observation_create.previous,
+            revised_previous=observation_create.revised_previous,
+            surprise_value=observation_create.surprise_value,
+            surprise_z=observation_create.surprise_z,
+            metadata_json=observation_create.metadata_json or {},
+        )
+        self.session.add(observation)
+        self.session.flush()
+        return observation
+
+    def add_market_time_series(self, series_create: MarketTimeSeriesCreate) -> MarketTimeSeries:
+        collected_at = series_create.collected_at or utc_now()
+        series = MarketTimeSeries(
+            series_id=make_id("MKT"),
+            symbol=series_create.symbol,
+            timestamp=series_create.timestamp,
+            frequency=series_create.frequency,
+            open=series_create.open,
+            high=series_create.high,
+            low=series_create.low,
+            close=series_create.close,
+            volume=series_create.volume,
+            value=series_create.value,
+            source_id=series_create.source_id,
+            collected_at=collected_at,
+            available_from=safe_available_from(
+                series_create.available_from,
+                series_create.timestamp,
+                collected_at,
+            ),
+            adjusted_flag=series_create.adjusted_flag,
+            metadata_json=series_create.metadata_json or {},
+        )
+        self.session.add(series)
+        self.session.flush()
+        return series
 
     def add_event(self, event_create: EventCreate) -> Event:
         event = Event(
@@ -171,6 +256,18 @@ class Repository:
 
     def list_decisions(self) -> list[DecisionLog]:
         return list(self.session.scalars(select(DecisionLog).order_by(DecisionLog.timestamp)).all())
+
+    def list_indicator_observations(self) -> list[IndicatorObservation]:
+        return list(
+            self.session.scalars(
+                select(IndicatorObservation).order_by(IndicatorObservation.indicator_id)
+            ).all()
+        )
+
+    def list_market_time_series(self) -> list[MarketTimeSeries]:
+        return list(
+            self.session.scalars(select(MarketTimeSeries).order_by(MarketTimeSeries.symbol)).all()
+        )
 
 
 def create_evidence_from_event(

@@ -1,0 +1,18 @@
+{
+  "records": [
+    {
+      "symbol": "005930",
+      "timestamp": "2026-06-29T06:30:00+00:00",
+      "frequency": "1d",
+      "open": 72000,
+      "high": 73500,
+      "low": 71800,
+      "close": 73200,
+      "volume": 12345678,
+      "value": 902000000000,
+      "adjusted_flag": false,
+      "collected_at": "2026-06-29T07:00:00+00:00",
+      "available_from": "2026-06-29T06:45:00+00:00"
+    }
+  ]
+}

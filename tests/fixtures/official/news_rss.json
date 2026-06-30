@@ -1,0 +1,23 @@
+{
+  "records": [
+    {
+      "title": "Memory prices improve on AI demand",
+      "body_text": "Mock RSS item for deterministic offline news ingestion.",
+      "url": "https://example.invalid/news/memory-ai-demand",
+      "published_at": "2026-06-29T00:30:00+00:00",
+      "collected_at": "2026-06-29T00:40:00+00:00",
+      "available_from": "2026-06-29T00:35:00+00:00",
+      "language": "en",
+      "checksum": "news-rss-memory-ai-demand"
+    },
+    {
+      "title": "Memory prices improve on AI demand",
+      "body_text": "Duplicate mock RSS item with same checksum.",
+      "url": "https://example.invalid/news/memory-ai-demand",
+      "published_at": "2026-06-29T00:30:00+00:00",
+      "collected_at": "2026-06-29T00:41:00+00:00",
+      "language": "en",
+      "checksum": "news-rss-memory-ai-demand"
+    }
+  ]
+}

@@ -18,6 +18,21 @@ flowchart LR
   G --> H["Markdown memo"]
 ```
 
+## Data Input Layer
+
+Official collectors share a common contract: `collector_id`, `source_id`,
+`fetch_raw`, `normalize`, and `ingest`. `fetch_raw` returns typed collector raw
+schemas, `normalize` returns internal create schemas, and `ingest` writes through
+repository methods. Mock mode reads local fixtures and does not require API keys.
+Real fetch paths are placeholders that raise clear configuration errors when
+required API keys are absent.
+
+OpenDART and News/RSS items enter `RawDocument` first. ECOS and FRED records
+enter `IndicatorObservation`. KRX records enter `MarketTimeSeries`. All collector
+records carry `collected_at` and `available_from`; repository writes enforce that
+`available_from` is not earlier than known publication, release, timestamp, or
+collection times.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
