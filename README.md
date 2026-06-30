@@ -201,6 +201,26 @@ Supported report codes are `11013`, `11012`, `11014`, and `11011`. The adapter
 does not download XBRL, parse footnotes, execute broker orders, auto-trade, or
 delegate investment decisions to an LLM.
 
+## KRX Daily Market Data Demo
+
+The KRX daily adapter can ingest selected daily market data from an offline
+fixture into `MarketTimeSeries`, then the existing market event detector can
+process those rows. No API key or network call is required for the fixture path.
+
+```bash
+project-stock krx-doctor
+project-stock ingest-krx-daily-fixture --fixture tests/fixtures/krx_daily_market_response.json --symbol 005930 --start-date 2026-06-26 --end-date 2026-06-29 --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock detect-market-events --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock generate-evidence-candidates --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Real KRX fetches are opt-in only. Set `PROJECT_STOCK_ALLOW_NETWORK=true` before
+using `fetch-krx-daily` or `ingest-krx-daily`. Optional credentials, if needed
+by a deployment, must come from `KRX_AUTH_TOKEN` or `KRX_API_KEY`. The adapter is
+daily-data only and does not implement tick data, order books, intraday minute
+data, broker order routing, live account sync, derivatives data, auto-trading,
+or LLM-directed investment decisions.
+
 ## Event Normalization Demo
 
 The normalization demo initializes the DB, registers sources, ingests the
@@ -253,6 +273,10 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock fetch-opendart-financials`: fetches opt-in OpenDART financial preview rows.
 - `project-stock ingest-opendart-financials`: ingests opt-in OpenDART financial rows.
 - `project-stock ingest-opendart-financials-fixture`: ingests OpenDART financial fixture rows offline.
+- `project-stock krx-doctor`: prints KRX real-data readiness without network calls.
+- `project-stock fetch-krx-daily`: fetches opt-in KRX daily market data preview rows.
+- `project-stock ingest-krx-daily`: ingests opt-in KRX daily market data rows.
+- `project-stock ingest-krx-daily-fixture`: ingests KRX daily market fixture rows offline.
 - `project-stock normalize-events`: normalizes all collected records into events.
 - `project-stock normalize-financial-events`: normalizes summary financial rows into events.
 - `project-stock normalize-events-from-documents`: normalizes RawDocument records.
@@ -287,6 +311,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `src/project_stock/db/`: SQLAlchemy models and DB initialization.
 - `src/project_stock/ingest/`: official collector interfaces and mock collectors.
 - `src/project_stock/events/financials.py`: financial statement event normalization.
+- `src/project_stock/ingest/krx.py`: KRX mock plus opt-in daily market data adapter.
 - `src/project_stock/evidence/`: event-to-thesis evidence candidate generation.
 - `src/project_stock/operations/`: daily and intraday operational review loops.
 - `src/project_stock/portfolio/`: portfolio exposure and thesis-state-aware review.

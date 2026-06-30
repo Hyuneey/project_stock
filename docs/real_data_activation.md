@@ -16,6 +16,8 @@ FRED_API_KEY=
 ECOS_API_KEY=
 DART_API_KEY=
 OPEN_DART_API_KEY=
+KRX_AUTH_TOKEN=
+KRX_API_KEY=
 ```
 
 `PROJECT_STOCK_ALLOW_NETWORK` defaults to `false`. Set it to `true` only for an
@@ -28,8 +30,8 @@ ECOS_API_KEY=your_ecos_key
 DART_API_KEY=your_opendart_key
 ```
 
-API keys are read only from the environment or `.env`. They must not be
-hardcoded or committed.
+API keys and optional credentials are read only from the environment or `.env`.
+They must not be hardcoded or committed.
 
 ## Doctor Commands
 
@@ -52,6 +54,15 @@ project-stock opendart-doctor
 It prints the network flag, whether `DART_API_KEY` or `OPEN_DART_API_KEY` is
 set, corp-code config status, OpenDART raw cache location, and the no-auto-trade
 warning.
+
+`krx-doctor` performs no network calls:
+
+```bash
+project-stock krx-doctor
+```
+
+It prints the network flag, optional KRX credential state, symbol config status,
+configured symbols, raw cache directory, and the no-auto-trade warning.
 
 ## Supported FRED Series
 
@@ -148,22 +159,47 @@ Supported report codes are `11013`, `11012`, `11014`, and `11011`. The adapter
 does not download XBRL, parse full report bodies, parse consolidated footnotes,
 or run production multi-company batch jobs.
 
-See `docs/opendart_adapter.md` and `docs/opendart_financials.md` for scope,
-corp-code config, cache behavior, available-from handling, and deferred work.
+## KRX Daily Market Data
+
+The KRX adapter supports selected daily stock, ETF, and index OHLCV rows through
+`configs/krx.symbols.example.yaml`.
+
+Fixture ingestion remains offline:
+
+```bash
+project-stock ingest-krx-daily-fixture --fixture tests/fixtures/krx_daily_market_response.json --symbol 005930 --start-date 2026-06-26 --end-date 2026-06-29
+```
+
+Real preview and ingestion are available only after explicit network opt-in:
+
+```bash
+project-stock fetch-krx-daily --symbol 005930 --start-date 2026-06-26 --end-date 2026-06-29
+project-stock ingest-krx-daily --symbol 005930 --start-date 2026-06-26 --end-date 2026-06-29
+```
+
+Optional credentials, if required by a deployment, must come from
+`KRX_AUTH_TOKEN` or `KRX_API_KEY`. The adapter does not support tick data, order
+books, intraday minute data, short-selling/borrow data, derivatives data, live
+account sync, broker order routing, auto-trading, or LLM-directed investment
+decisions.
+
+See `docs/opendart_adapter.md`, `docs/opendart_financials.md`, and
+`docs/krx_adapter.md` for source-specific scope and limitations.
 
 ## Raw Response Cache
 
-Real fetches save raw JSON by default:
+Real fetches save raw JSON or CSV-compatible text by default:
 
 - FRED: `data/raw/fred/`
 - ECOS: `data/raw/ecos/`
 - OpenDART disclosure list: `data/raw/opendart/`
 - OpenDART financial statements: `data/raw/opendart/financial/`
+- KRX daily market data: `data/raw/krx/`
 
 Downloaded data remains ignored by Git through `data/raw/*`. Cache paths are
-stored in `metadata_json["raw_cache_path"]` when available.
+stored in metadata when available.
 
-Use `--no-cache-raw` to skip writing raw response JSON where supported.
+Use `--no-cache-raw` to skip writing raw response data where supported.
 
 ## Point-In-Time Limitations
 
@@ -176,17 +212,20 @@ and vintage behavior.
 OpenDART financial statement rows do not include exact API release timestamps in
 the MVP parser, so `available_from` is set no earlier than local collection time.
 
+KRX daily bars use a conservative market-close-plus-delay assumption and are
+never available before the trading date close represented by the bar.
+
 ## Offline Tests
 
 The test suite uses fixture parsers for FRED observation responses, ECOS
-StatisticSearch responses, OpenDART disclosure list responses, and OpenDART
-financial statement responses. It does not require network access or real API
-keys.
+StatisticSearch responses, OpenDART disclosure list responses, OpenDART
+financial statement responses, and KRX daily market data responses. It does not
+require network access or real API keys.
 
 The real adapter boundary is tested with:
 
 - network disabled fetch rejection
-- missing API key rejection
+- missing API key or credential rejection where applicable
 - fixture parser validation
 - fixture-backed CLI ingestion
 - raw cache path generation

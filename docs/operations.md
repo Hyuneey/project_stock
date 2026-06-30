@@ -147,6 +147,31 @@ report codes `11013`, `11012`, `11014`, and `11011`. It does not download XBRL,
 parse footnotes, produce orders, auto-trade, or delegate investment decisions to
 an LLM.
 
+## KRX Daily Market Data Workflow
+
+Use the fixture-backed path for local validation:
+
+1. Run `krx-doctor` to inspect network opt-in, optional credential state,
+   configured symbols, and raw cache location. This command makes no network
+   calls.
+2. Run `ingest-krx-daily-fixture` with a fixture, configured symbol, start date,
+   and end date.
+3. Run `detect-market-events` to let the existing market-move detector process
+   stored `MarketTimeSeries` rows.
+4. Run `generate-evidence-candidates` when mapped market events should feed
+   thesis evidence review.
+
+Real `fetch-krx-daily` and `ingest-krx-daily` commands are disabled unless
+`PROJECT_STOCK_ALLOW_NETWORK=true`. Optional credentials, if a deployment needs
+them, must come from `KRX_AUTH_TOKEN` or `KRX_API_KEY`. Raw responses are cached
+under `data/raw/krx/` when caching is enabled.
+
+Daily KRX rows use a conservative availability rule: market close plus 15
+minutes or `collected_at`, whichever is later. The adapter does not support tick
+data, order books, intraday minute data, short-selling/borrow data, derivatives
+data, live account sync, broker order routing, auto-trading, or LLM-directed
+investment decisions.
+
 ## Dashboard Workflow
 
 `prepare-dashboard-demo` prepares local demo data for inspection:

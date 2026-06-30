@@ -204,6 +204,22 @@ class Repository:
         self.session.flush()
         return series
 
+    def find_market_time_series(
+        self,
+        symbol: str,
+        timestamp: datetime,
+        frequency: str,
+        source_id: str | None = None,
+    ) -> MarketTimeSeries | None:
+        statement = select(MarketTimeSeries).where(
+            MarketTimeSeries.symbol == symbol,
+            MarketTimeSeries.timestamp == timestamp,
+            MarketTimeSeries.frequency == frequency,
+        )
+        if source_id is not None:
+            statement = statement.where(MarketTimeSeries.source_id == source_id)
+        return self.session.scalars(statement).first()
+
     def add_event(self, event_create: EventCreate) -> Event:
         event = Event(
             event_id=event_create.event_id or make_id("EVT", event_create.event_time),

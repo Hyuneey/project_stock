@@ -59,9 +59,29 @@ available. Downloaded data is ignored by Git.
 
 ## KRX
 
-KRX is the planned source for Korean market price and trading data. The MVP mock
-collector maps fixture rows to `MarketTimeSeries` with OHLCV, traded value,
-frequency, adjustment flag, `collected_at`, and `available_from`.
+KRX is the source for Korean daily market price and trading data. The MVP keeps
+real fetching opt-in and controlled by `PROJECT_STOCK_ALLOW_NETWORK=false` by
+default.
+
+The KRX daily adapter supports selected configured symbols for:
+
+- daily stock OHLCV
+- daily ETF OHLCV when represented through the same daily contract
+- daily index level when represented as `MarketTimeSeries`
+
+Symbol metadata lives in `configs/krx.symbols.example.yaml`. Fixture ingestion
+requires no network and no credentials. Real fetches must be explicitly enabled
+with `PROJECT_STOCK_ALLOW_NETWORK=true`; optional credentials, if required by a
+deployment, are read only from `KRX_AUTH_TOKEN` or `KRX_API_KEY`.
+
+For end-of-day data, the adapter treats the market observation timestamp as the
+Korea market close time and sets `available_from` to the later of market close
+plus 15 minutes or `collected_at`. This keeps daily bars point-in-time safe for
+reviews and backtests.
+
+The adapter does not implement tick data, order book data, intraday minute data,
+broker order routing, live account or portfolio sync, short-selling/borrow data,
+or derivatives data.
 
 ## News/RSS
 
