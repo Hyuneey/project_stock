@@ -31,6 +31,14 @@ metrics and exposure context. It computes the Emergency Impact Score, matches
 YAML scenarios, executes playbooks, appends trigger/evidence/decision records,
 and returns allowed and forbidden risk actions.
 
+## Scenario Matching
+
+Scenario triggers support `any_of`, `all_of`, and `min_score` modes. Required
+conditions act as gates, optional conditions contribute to the match score and
+diagnostic output, and legacy `any_of` YAML continues to load. The matcher treats
+missing, `null`, and malformed metric values as explicit non-matches rather than
+runtime failures.
+
 ## Lifecycle
 
 Theses, scenarios, and playbooks are versioned YAML files. A thesis can move
@@ -42,5 +50,7 @@ matches and emergency levels.
 ## Append-Only Audit Principle
 
 `EvidenceLedger` and `DecisionLog` rows are append-only in the MVP. The code
-provides create/list helpers, not update helpers, so prior reasoning remains
-auditable.
+provides append/list helpers, not update/delete helpers, so prior reasoning
+remains auditable. ORM guards reject direct update or delete attempts on these
+audit rows; corrections should be appended as new records with their own
+rationale.

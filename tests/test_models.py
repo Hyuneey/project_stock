@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
 from sqlalchemy import select
 
 from project_stock.db.models import DecisionLog, Event, EvidenceLedger, RawDocument, Source
@@ -55,3 +56,69 @@ def test_db_init_and_core_inserts(db_session):
         select(DecisionLog).where(DecisionLog.decision_id == decision.decision_id)
     )
     assert not hasattr(repo, "update_evidence")
+
+
+def test_audit_repository_has_create_and_list_paths_only(db_session):
+    repo = Repository(db_session)
+    evidence = repo.append_evidence(
+        EvidenceCreate(
+            thesis_id="KOR_SEMI_MEMORY_UPCYCLE",
+            evidence_type="manual",
+            claim="Append-only evidence.",
+        )
+    )
+    decision = repo.append_decision(
+        DecisionCreate(
+            decision_type="manual_review",
+            action="record_only",
+            rationale="Append-only decision.",
+        )
+    )
+    db_session.commit()
+
+    assert evidence in repo.list_evidence()
+    assert decision in repo.list_decisions()
+    forbidden_prefixes = ("update_evidence", "delete_evidence", "update_decision", "delete_decision")
+    assert not any(hasattr(repo, name) for name in forbidden_prefixes)
+
+
+def test_evidence_ledger_update_and_delete_are_guarded(db_session):
+    repo = Repository(db_session)
+    evidence = repo.append_evidence(
+        EvidenceCreate(
+            thesis_id="KOR_SEMI_MEMORY_UPCYCLE",
+            evidence_type="manual",
+            claim="Original claim.",
+        )
+    )
+    db_session.commit()
+
+    evidence.claim = "Changed claim."
+    with pytest.raises(RuntimeError, match="EvidenceLedger is append-only"):
+        db_session.commit()
+    db_session.rollback()
+
+    db_session.delete(evidence)
+    with pytest.raises(RuntimeError, match="EvidenceLedger is append-only"):
+        db_session.commit()
+
+
+def test_decision_log_update_and_delete_are_guarded(db_session):
+    repo = Repository(db_session)
+    decision = repo.append_decision(
+        DecisionCreate(
+            decision_type="manual_review",
+            action="record_only",
+            rationale="Original rationale.",
+        )
+    )
+    db_session.commit()
+
+    decision.rationale = "Changed rationale."
+    with pytest.raises(RuntimeError, match="DecisionLog is append-only"):
+        db_session.commit()
+    db_session.rollback()
+
+    db_session.delete(decision)
+    with pytest.raises(RuntimeError, match="DecisionLog is append-only"):
+        db_session.commit()

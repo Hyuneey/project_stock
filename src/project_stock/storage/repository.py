@@ -164,6 +164,14 @@ class Repository:
     def list_events(self) -> list[Event]:
         return list(self.session.scalars(select(Event).order_by(Event.event_time)).all())
 
+    def list_evidence(self) -> list[EvidenceLedger]:
+        return list(
+            self.session.scalars(select(EvidenceLedger).order_by(EvidenceLedger.created_at)).all()
+        )
+
+    def list_decisions(self) -> list[DecisionLog]:
+        return list(self.session.scalars(select(DecisionLog).order_by(DecisionLog.timestamp)).all())
+
 
 def create_evidence_from_event(
     event: Event,
