@@ -67,8 +67,29 @@ Emergency memos include the event summary, EIS score and level, matched
 scenarios, affected theses, evidence counts, allowed and forbidden risk actions,
 close-review requirement, and a no-auto-trade disclaimer.
 
+Thesis review memos include the evaluation date, thesis state table,
+support/contradiction/neutral scores, proposed transitions, top supporting and
+contradicting evidence, invalidation warnings, recommended human review actions,
+and a no-auto-trade disclaimer.
+
+## Thesis Review Process
+
+`run-thesis-review-demo` runs the offline source-to-thesis-review chain:
+
+1. Register sources.
+2. Ingest the official mock bundle with idempotent source-record checks.
+3. Normalize events.
+4. Generate and append deduplicated evidence.
+5. Evaluate thesis states from accumulated EvidenceLedger rows.
+6. Append deduplicated ThesisStateSnapshot rows.
+7. Render `thesis_review_memo_<date>.md`.
+
+`evaluate-thesis-states` can be run against an existing DB to append snapshots
+from already accumulated evidence. `archive-thesis` is the only path that
+creates an `archived` snapshot.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,
-and markdown memos. Forbidden outputs are broker orders, automatic trade
-execution, and LLM-directed investment decisions.
+thesis state snapshots, and markdown memos. Forbidden outputs are broker orders,
+automatic trade execution, and LLM-directed investment decisions.

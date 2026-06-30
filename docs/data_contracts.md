@@ -147,6 +147,58 @@ Repeated reviews may append new DecisionLog rows. Duplicate evidence for the
 same event/thesis/scenario/evidence type must be skipped and recorded in
 DecisionLog metadata.
 
+## Thesis Lifecycle Contracts
+
+Supported `ThesisState` values are:
+
+- `candidate`
+- `watch`
+- `active`
+- `core_overweight`
+- `crowded`
+- `deteriorating`
+- `suspended`
+- `invalidated`
+- `archived`
+
+`ThesisStateEvaluationInput` includes `thesis_id`, `as_of`, optional
+`previous_state`, optional `lookback_days`, `minimum_evidence_count`, optional
+`big_flow_score`, and optional `crowding_flag`.
+
+`ThesisStateEvaluationResult` includes:
+
+- `thesis_id`
+- `previous_state`
+- `proposed_state`
+- `confidence_score`
+- `support_score`
+- `contradiction_score`
+- `neutral_score`
+- `net_evidence_score`
+- `risk_score`
+- `big_flow_score`
+- `evidence_count`
+- `top_supporting_evidence`
+- `top_contradicting_evidence`
+- `transition_reasons`
+- `recommended_review_action`
+- `no_auto_trade`
+- `invalidation_warnings`
+- `evidence_ids`
+
+`ThesisLifecycleTransition` records previous and proposed states, whether the
+recommendation changed, transition reason, and snapshot ID when available.
+
+`ThesisReviewResult` records evaluation count, appended snapshot count, skipped
+duplicate snapshot count, memo path, evaluations, transitions, warnings, and
+`no_auto_trade`.
+
+`ThesisStateSnapshot` persistence is append-only. A run may append one snapshot
+per thesis. Repeated evaluation for the same `as_of` and same evidence/scoring
+fingerprint skips duplicate snapshots unless a force flag is used. Snapshot
+metadata stores evidence IDs, scoring components, transition reasons,
+invalidation warnings, recommended review action, and `no_auto_trade`.
+
 ## Scenario Trigger Contract
 
 Thesis, scenario, and playbook YAML files are validated with Pydantic schemas.
@@ -196,8 +248,9 @@ of raising runtime exceptions. Boolean metric strings are parsed only from
 
 ## Append-Only Audit Contract
 
-`EvidenceLedger` and `DecisionLog` are append-only at the application level.
-Repository methods provide append and list paths only. Update and delete paths
-are forbidden, and ORM flush guards raise if application code attempts to update
-or delete these rows directly. Corrections must be represented by new appended
-records that explain the superseding evidence or decision rationale.
+`EvidenceLedger`, `DecisionLog`, and `ThesisStateSnapshot` are append-only at the
+application level. Repository methods provide append and list paths only. Update
+and delete paths are forbidden, and ORM flush guards raise if application code
+attempts to update or delete these rows directly. Corrections must be
+represented by new appended records that explain the superseding evidence,
+decision rationale, or thesis-state review.

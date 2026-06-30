@@ -16,6 +16,7 @@ from project_stock.db.models import (
     RawDocument,
     ScenarioTriggerLog,
     Source,
+    ThesisStateSnapshot,
 )
 from project_stock.schemas.decisions import DecisionCreate
 from project_stock.schemas.documents import RawDocumentCreate
@@ -252,6 +253,30 @@ class Repository:
         self.session.flush()
         return trigger
 
+    def append_thesis_snapshot(
+        self,
+        thesis_id: str,
+        version: str,
+        status: str,
+        as_of: datetime,
+        state_reason: str,
+        big_flow_score: float | None = None,
+        metadata_json: dict | None = None,
+    ) -> ThesisStateSnapshot:
+        snapshot = ThesisStateSnapshot(
+            snapshot_id=make_id("THS", as_of),
+            thesis_id=thesis_id,
+            version=version,
+            status=status,
+            as_of=as_of,
+            big_flow_score=big_flow_score,
+            state_reason=state_reason,
+            metadata_json=metadata_json or {},
+        )
+        self.session.add(snapshot)
+        self.session.flush()
+        return snapshot
+
     def list_events(self) -> list[Event]:
         return list(self.session.scalars(select(Event).order_by(Event.event_time)).all())
 
@@ -285,6 +310,20 @@ class Repository:
 
     def list_decisions(self) -> list[DecisionLog]:
         return list(self.session.scalars(select(DecisionLog).order_by(DecisionLog.timestamp)).all())
+
+    def list_thesis_snapshots(self, thesis_id: str | None = None) -> list[ThesisStateSnapshot]:
+        statement = select(ThesisStateSnapshot).order_by(ThesisStateSnapshot.as_of)
+        if thesis_id is not None:
+            statement = statement.where(ThesisStateSnapshot.thesis_id == thesis_id)
+        return list(self.session.scalars(statement).all())
+
+    def latest_thesis_snapshot(self, thesis_id: str) -> ThesisStateSnapshot | None:
+        statement = (
+            select(ThesisStateSnapshot)
+            .where(ThesisStateSnapshot.thesis_id == thesis_id)
+            .order_by(ThesisStateSnapshot.as_of.desc(), ThesisStateSnapshot.created_at.desc())
+        )
+        return self.session.scalars(statement).first()
 
     def list_indicator_observations(self) -> list[IndicatorObservation]:
         return list(

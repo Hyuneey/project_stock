@@ -15,9 +15,12 @@ flowchart LR
   D --> E["EvidenceCandidate scoring"]
   E --> F["EvidenceLedger append"]
   F --> G["Scenario matcher"]
-  G --> H["Playbook executor"]
-  H --> I["DecisionLog append"]
-  I --> J["Markdown memo"]
+  F --> H["Thesis lifecycle evaluator"]
+  G --> I["Playbook executor"]
+  H --> J["ThesisStateSnapshot append"]
+  I --> K["DecisionLog append"]
+  J --> L["Markdown memo"]
+  K --> L
 ```
 
 ## Data Input Layer
@@ -74,6 +77,26 @@ for the same `event_id`, `thesis_id`, `scenario_id`, and `evidence_type` is
 skipped, and metadata records the mapped entities plus relevance reasons. The
 layer does not call LLMs, external APIs, broker systems, or paid services.
 
+## Thesis Lifecycle Layer
+
+The thesis lifecycle layer aggregates accumulated `EvidenceLedger` rows by
+`thesis_id` and proposes the next thesis state. It reads thesis YAML, latest
+prior snapshots, optional Big Flow scores, and invalidation conditions.
+Supportive evidence raises `support_score`, contradicting evidence raises
+`contradiction_score` and `risk_score`, and neutral evidence is counted without
+strongly moving state.
+
+Transitions are deterministic recommendations. Examples include `watch` to
+`active` when support is strong and contradiction is low, `active` to
+`deteriorating` when contradictions rise, and `deteriorating` or `suspended` to
+`invalidated` when strong invalidation evidence appears. `invalidated` does not
+automatically archive; `archived` snapshots are created only by explicit archive
+command.
+
+`ThesisStateSnapshot` rows are append-only. Repeated evaluation for the same
+`as_of` and identical evidence/scoring fingerprint skips duplicate snapshots
+unless a force flag is used.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
@@ -107,6 +130,9 @@ evidence. Repeated intraday runs against the same emergency fixture reuse the
 same event lineage and skip duplicate evidence. DecisionLog entries remain
 append-only and can be repeated to show each operational review pass.
 
+The thesis review workflow runs after evidence accumulation and creates
+append-only thesis state recommendations plus a thesis review memo.
+
 ## Scenario Matching
 
 Scenario triggers support `any_of`, `all_of`, and `min_score` modes. Required
@@ -125,8 +151,8 @@ matches and emergency levels.
 
 ## Append-Only Audit Principle
 
-`EvidenceLedger` and `DecisionLog` rows are append-only in the MVP. The code
-provides append/list helpers, not update/delete helpers, so prior reasoning
-remains auditable. ORM guards reject direct update or delete attempts on these
-audit rows; corrections should be appended as new records with their own
-rationale.
+`EvidenceLedger`, `DecisionLog`, and `ThesisStateSnapshot` rows are append-only
+in the MVP. The code provides append/list helpers, not update/delete helpers, so
+prior reasoning remains auditable. ORM guards reject direct update or delete
+attempts on these audit rows; corrections should be appended as new records with
+their own rationale.
