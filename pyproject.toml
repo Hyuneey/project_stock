@@ -43,7 +43,6 @@ project_stock = ["reports/templates/*.j2"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--basetemp=.pytest_tmp"
 
 [tool.ruff]
 line-length = 100

@@ -143,6 +143,23 @@ project-stock ingest-krx-mock --fixture tests/fixtures/official/krx_market.json
 project-stock ingest-news-mock --fixture tests/fixtures/official/news_rss.json
 ```
 
+## Real FRED and ECOS Adapters
+
+Real FRED and ECOS fetches are opt-in only. Network access is disabled unless
+`PROJECT_STOCK_ALLOW_NETWORK=true`, and tests do not require network or real API
+keys.
+
+```bash
+project-stock real-data-doctor
+PROJECT_STOCK_ALLOW_NETWORK=true FRED_API_KEY=... project-stock fetch-fred-series --series-id DGS10 --start-date 2026-06-01 --end-date 2026-06-30
+PROJECT_STOCK_ALLOW_NETWORK=true ECOS_API_KEY=... project-stock fetch-ecos-series --indicator-id ECOS_BASE_RATE --start-date 2026-06-01 --end-date 2026-06-30
+```
+
+Use `ingest-fred-series` and `ingest-ecos-series` to insert normalized
+`IndicatorObservation` rows. Raw JSON responses are cached under `data/raw/fred/`
+or `data/raw/ecos/` by default and remain ignored by Git. See
+`docs/real_data_activation.md`.
+
 ## Event Normalization Demo
 
 The normalization demo initializes the DB, registers sources, ingests the

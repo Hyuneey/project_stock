@@ -1,0 +1,13 @@
+series:
+  - indicator_id: ECOS_BASE_RATE
+    stat_code: "722Y001"
+    item_code1: "0101000"
+    frequency: D
+    unit: percent
+    description: Bank of Korea base rate
+  - indicator_id: ECOS_CPI_KR
+    stat_code: "901Y009"
+    item_code1: "0"
+    frequency: M
+    unit: index
+    description: Korea consumer price index example mapping

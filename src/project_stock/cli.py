@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -39,13 +40,19 @@ from project_stock.evidence.generation import (
     generate_evidence_candidates as generate_evidence_candidates_flow,
     run_evidence_demo as run_evidence_demo_flow,
 )
+from project_stock.ingest.base import CollectorConfigError
 from project_stock.ingest.dart import OpenDartCollector
-from project_stock.ingest.ecos import EcosCollector
-from project_stock.ingest.fred import FredCollector
+from project_stock.ingest.ecos import EcosCollector, load_ecos_series_config
+from project_stock.ingest.fred import FredCollector, SUPPORTED_FRED_SERIES
 from project_stock.ingest.krx import KrxCollector
 from project_stock.ingest.mock import ingest_mock_data
 from project_stock.ingest.news import NewsRssCollector
 from project_stock.ingest.official_bundle import ingest_official_mock_bundle as ingest_bundle
+from project_stock.ingest.real_data import (
+    NETWORK_ENV_VAR,
+    build_raw_cache_path,
+    network_enabled,
+)
 from project_stock.ingest.sources import register_official_sources
 from project_stock.operations.review_loop import (
     run_daily_review_loop as run_daily_review_loop_flow,
@@ -79,6 +86,11 @@ def _echo_json(payload: Any) -> None:
     console.print(json.dumps(payload, indent=2, sort_keys=True, default=str), markup=False)
 
 
+def _exit_with_error(error: Exception) -> None:
+    _echo_json({"status": "error", "error": str(error), "no_auto_trade": True})
+    raise typer.Exit(1)
+
+
 def _dashboard_command(db_url: str, memo_dir: Path) -> list[str]:
     return [
         sys.executable,
@@ -107,6 +119,38 @@ def register_sources(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> 
         sources = register_official_sources(session)
         source_ids = [source.source_id for source in sources]
     _echo_json({"registered_sources": len(source_ids), "source_ids": source_ids})
+
+
+@app.command()
+def real_data_doctor(db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url")) -> None:
+    _echo_json(
+        {
+            "status": "ok",
+            "db_url": db_url,
+            NETWORK_ENV_VAR: os.getenv(NETWORK_ENV_VAR, "false"),
+            "network_enabled": network_enabled(),
+            "fred_api_key_set": bool(os.getenv("FRED_API_KEY")),
+            "ecos_api_key_set": bool(os.getenv("ECOS_API_KEY")),
+            "raw_cache_directories": {
+                "fred": str(build_raw_cache_path("fred", "DGS10", "YYYY-MM-DD", "YYYY-MM-DD").parent),
+                "ecos": str(
+                    build_raw_cache_path("ecos", "ECOS_BASE_RATE", "YYYY-MM-DD", "YYYY-MM-DD").parent
+                ),
+            },
+            "supported_fred_series": sorted(SUPPORTED_FRED_SERIES),
+            "configured_ecos_series_example": sorted(
+                load_ecos_series_config(Path("configs/ecos.series.example.yaml"))
+            )
+            if Path("configs/ecos.series.example.yaml").exists()
+            else [],
+            "point_in_time_caution": (
+                "Real observations are marked available no earlier than their source release "
+                "or local collection time; verify source-specific release lags before research use."
+            ),
+            "no_auto_trade": True,
+            "warning": "Decision support only: no broker execution, no auto-trading, no LLM trade decisions.",
+        }
+    )
 
 
 @app.command()
@@ -159,6 +203,67 @@ def ingest_ecos_mock(
 
 
 @app.command()
+def fetch_ecos_series(
+    indicator_id: str = typer.Option(..., "--indicator-id"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    series_config: Path = typer.Option(Path("configs/ecos.series.example.yaml"), "--series-config"),
+    fixture: Path | None = typer.Option(None, "--fixture"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    try:
+        collector = EcosCollector()
+        raw_records = collector.fetch_series(
+            indicator_id=indicator_id,
+            start_date=start_date,
+            end_date=end_date,
+            series_config=series_config,
+            fixture=fixture,
+            cache_raw=cache_raw,
+        )
+        observations = collector.normalize(raw_records)
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "source_id": "BOK_ECOS",
+            "indicator_id": indicator_id,
+            "record_count": len(observations),
+            "observations": [record.model_dump(mode="json") for record in observations],
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def ingest_ecos_series(
+    indicator_id: str = typer.Option(..., "--indicator-id"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    series_config: Path = typer.Option(Path("configs/ecos.series.example.yaml"), "--series-config"),
+    fixture: Path | None = typer.Option(None, "--fixture"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = EcosCollector().ingest_series(
+                session=session,
+                indicator_id=indicator_id,
+                start_date=start_date,
+                end_date=end_date,
+                series_config=series_config,
+                fixture=fixture,
+                cache_raw=cache_raw,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
 def ingest_fred_mock(
     fixture: Path = typer.Option(..., "--fixture"),
     db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
@@ -166,6 +271,63 @@ def ingest_fred_mock(
     init_database(db_url)
     with session_scope(db_url) as session:
         result = FredCollector().ingest(session, fixture=fixture, mock=True)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def fetch_fred_series(
+    series_id: str = typer.Option(..., "--series-id"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    fixture: Path | None = typer.Option(None, "--fixture"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    try:
+        collector = FredCollector()
+        raw_records = collector.fetch_series(
+            series_id=series_id,
+            start_date=start_date,
+            end_date=end_date,
+            fixture=fixture,
+            cache_raw=cache_raw,
+        )
+        observations = collector.normalize(raw_records)
+    except CollectorConfigError as exc:
+        _exit_with_error(exc)
+    _echo_json(
+        {
+            "status": "ok",
+            "source_id": "FRED",
+            "series_id": series_id.upper(),
+            "record_count": len(observations),
+            "observations": [record.model_dump(mode="json") for record in observations],
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
+def ingest_fred_series(
+    series_id: str = typer.Option(..., "--series-id"),
+    start_date: str = typer.Option(..., "--start-date"),
+    end_date: str = typer.Option(..., "--end-date"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    fixture: Path | None = typer.Option(None, "--fixture"),
+    cache_raw: bool = typer.Option(True, "--cache-raw/--no-cache-raw"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = FredCollector().ingest_series(
+                session=session,
+                series_id=series_id,
+                start_date=start_date,
+                end_date=end_date,
+                fixture=fixture,
+                cache_raw=cache_raw,
+            )
+    except CollectorConfigError as exc:
+        _exit_with_error(exc)
     _echo_json(result.model_dump(mode="json"))
 
 
