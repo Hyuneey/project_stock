@@ -47,10 +47,14 @@ def event_from_document(document: Mapping[str, Any] | object) -> EventCreate:
     event_time = _field(document, "event_time") or _field(document, "published_at") or utc_now()
     if isinstance(event_time, str):
         event_time = datetime.fromisoformat(event_time.replace("Z", "+00:00"))
+    available_from = _field(document, "available_from") or event_time
+    if isinstance(available_from, str):
+        available_from = datetime.fromisoformat(available_from.replace("Z", "+00:00"))
     summary = _field(document, "summary") or _field(document, "title", "Untitled event")
     return EventCreate(
         event_type=classify_document(document),
         event_time=event_time,
+        available_from=available_from,
         summary=summary,
         source_reliability=float(_field(document, "source_reliability", 3.0)),
         surprise_score=float(_field(document, "surprise_score", 3.0)),

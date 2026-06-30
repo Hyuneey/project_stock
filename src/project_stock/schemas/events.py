@@ -12,6 +12,7 @@ class EventCreate(SchemaBase):
     event_type: str
     event_time: datetime
     first_seen_at: datetime | None = None
+    available_from: datetime
     summary: str
     source_reliability: float = Field(default=3.0, ge=0, le=5)
     surprise_score: float = Field(default=3.0, ge=0, le=5)

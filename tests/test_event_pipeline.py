@@ -29,6 +29,7 @@ def test_event_to_evidence_creation(db_session):
         EventCreate(
             event_type="industry_data",
             event_time=datetime(2026, 6, 29, tzinfo=UTC),
+            available_from=datetime(2026, 6, 29, tzinfo=UTC),
             summary="Semiconductor inventory improves.",
             surprise_score=4.0,
         )

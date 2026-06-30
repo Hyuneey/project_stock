@@ -25,6 +25,7 @@ def test_db_init_and_core_inserts(db_session):
         EventCreate(
             event_type="macro_rate_shock",
             event_time=datetime(2026, 6, 29, tzinfo=UTC),
+            available_from=datetime(2026, 6, 29, tzinfo=UTC),
             summary="Fed rate shock",
         )
     )

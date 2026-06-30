@@ -10,7 +10,7 @@
 - `IndicatorObservation`: macro or fundamental releases with `release_at`,
   `collected_at`, `available_from`, and optional vintage fields.
 - `Event`: normalized event with scores for reliability, surprise, persistence,
-  and market confirmation.
+  market confirmation, and `available_from`.
 - `EventEntity`: event-to-company, theme, or macro-factor mapping.
 - `EvidenceLedger`: append-only thesis/scenario evidence.
 - `DecisionLog`: append-only decision-support actions and rationale.
@@ -36,6 +36,30 @@ Collector writes apply the same rule for each destination:
 - Raw documents: `available_from >= max(published_at, collected_at)` when present.
 - Indicator observations: `available_from >= max(release_at, collected_at)` when present.
 - Market series: `available_from >= max(timestamp, collected_at)` when present.
+
+## Event Normalization Contract
+
+Every normalized event must include:
+
+- `event_id`: stable event identifier assigned before insert.
+- `event_type`: deterministic taxonomy value.
+- `event_time`: source event/release/market observation time.
+- `first_seen_at`: first time the system can reasonably observe the event.
+- `available_from`: earliest timestamp when downstream logic may use the event.
+- `summary`: human-readable event statement.
+- `source_reliability`, `surprise_score`, `persistence_score`,
+  `market_confirmation_score`: bounded MVP scores from 0 to 5.
+- `metadata_json`: source lineage, source record ID, source ID, and source
+  fields used for normalization.
+
+`available_from` must not be earlier than the underlying source record's
+`available_from`. Normalizers also retain `source_table` and `source_record_id`
+inside `metadata_json` so duplicate prevention and audit review can trace the
+event back to the collected record.
+
+`event_time` is when the source phenomenon occurred or was published. For
+OpenDART and News/RSS this is usually `published_at`; for ECOS/FRED this is
+`release_at`; for market data this is the market observation `timestamp`.
 
 ## Collector Contract
 

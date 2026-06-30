@@ -92,6 +92,7 @@ class Event(Base):
     event_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     event_time: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     first_seen_at: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    available_from: Mapped[object] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     source_reliability: Mapped[float] = mapped_column(Float, default=3.0, nullable=False)
     surprise_score: Mapped[float] = mapped_column(Float, default=3.0, nullable=False)

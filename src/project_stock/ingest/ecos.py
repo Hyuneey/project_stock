@@ -21,6 +21,11 @@ class EcosIndicatorRecord(SchemaBase):
     release_at: datetime
     collected_at: datetime | None = None
     available_from: datetime | None = None
+    consensus: float | None = None
+    previous: float | None = None
+    revised_previous: float | None = None
+    surprise_value: float | None = None
+    surprise_z: float | None = None
     source_id: str = "BOK_ECOS"
 
 
@@ -50,6 +55,11 @@ class EcosCollector(OfficialCollector[EcosIndicatorRecord, IndicatorObservationC
                         record.release_at,
                         collected_at,
                     ),
+                    consensus=record.consensus,
+                    previous=record.previous,
+                    revised_previous=record.revised_previous,
+                    surprise_value=record.surprise_value,
+                    surprise_z=record.surprise_z,
                 )
             )
         return observations

@@ -33,6 +33,26 @@ records carry `collected_at` and `available_from`; repository writes enforce tha
 `available_from` is not earlier than known publication, release, timestamp, or
 collection times.
 
+## Normalization Layer
+
+The event normalization layer converts collected records into normalized
+investment events:
+
+- `RawDocument` from OpenDART and News/RSS becomes disclosure or headline events.
+- `IndicatorObservation` from ECOS and FRED becomes macro release or surprise events.
+- `MarketTimeSeries` from KRX or future market sources becomes large-move events
+  when prior observations and threshold rules allow deterministic detection.
+
+Normalizers are rule-based and deterministic. They do not call LLMs, external
+APIs, broker systems, or paid services. Each normalized event records
+`event_time`, `first_seen_at`, and `available_from`; `available_from` is carried
+forward from the source record and must not be earlier than that source record's
+availability time.
+
+Duplicate prevention happens before inserts. The MVP skips events generated from
+the same source record, skips News/RSS duplicates by checksum, and skips close
+duplicates when the event type, mapped entity, and timestamp window overlap.
+
 ## Daily Sentinel
 
 The Daily Sentinel reviews recorded events, appends evidence rows for the thesis
