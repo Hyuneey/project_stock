@@ -160,6 +160,28 @@ Use `ingest-fred-series` and `ingest-ecos-series` to insert normalized
 or `data/raw/ecos/` by default and remain ignored by Git. See
 `docs/real_data_activation.md`.
 
+## OpenDART Disclosure Adapter
+
+OpenDART disclosure-list ingestion is opt-in for real network calls. Tests and
+fixture commands do not require API keys or network access.
+
+```bash
+project-stock opendart-doctor
+project-stock ingest-opendart-disclosures-fixture --fixture tests/fixtures/opendart_disclosure_list_response.json
+```
+
+For real fetches, explicitly set `PROJECT_STOCK_ALLOW_NETWORK=true` and either
+`DART_API_KEY` or `OPEN_DART_API_KEY`:
+
+```bash
+project-stock fetch-opendart-disclosures --stock-code 005930 --bgn-de 20260601 --end-de 20260630
+project-stock ingest-opendart-disclosures --stock-code 005930 --bgn-de 20260601 --end-de 20260630
+```
+
+This adapter only handles disclosure list rows. It does not download full report
+bodies, parse XBRL, extract financial statements, execute broker orders,
+auto-trade, or make LLM-directed investment decisions.
+
 ## Event Normalization Demo
 
 The normalization demo initializes the DB, registers sources, ingests the

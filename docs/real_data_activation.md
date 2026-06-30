@@ -1,8 +1,7 @@
 # Real Data Activation
 
-This layer activates real FRED and ECOS adapters after the v0.1.0 MVP baseline.
-Real API calls are opt-in only. Tests and demo workflows remain offline and
-deterministic.
+This layer activates opt-in real-data adapters after the v0.1.0 MVP baseline.
+The default project mode remains offline, deterministic, and fixture-driven.
 
 The system remains decision support only: no broker execution, no auto-trading,
 no live buy/sell orders, and no LLM-directed investment decisions.
@@ -15,6 +14,8 @@ Copy `.env.example` to `.env` or set environment variables directly:
 PROJECT_STOCK_ALLOW_NETWORK=false
 FRED_API_KEY=
 ECOS_API_KEY=
+DART_API_KEY=
+OPEN_DART_API_KEY=
 ```
 
 `PROJECT_STOCK_ALLOW_NETWORK` defaults to `false`. Set it to `true` only for an
@@ -24,12 +25,13 @@ intentional real API fetch:
 PROJECT_STOCK_ALLOW_NETWORK=true
 FRED_API_KEY=your_fred_key
 ECOS_API_KEY=your_ecos_key
+DART_API_KEY=your_opendart_key
 ```
 
 API keys are read only from the environment or `.env`. They must not be
 hardcoded or committed.
 
-## Doctor Command
+## Doctor Commands
 
 `real-data-doctor` performs no network calls:
 
@@ -40,6 +42,16 @@ project-stock real-data-doctor
 It prints the DB URL, network flag, whether `FRED_API_KEY` and `ECOS_API_KEY`
 are set, raw cache directories, supported FRED series, configured ECOS series,
 a point-in-time caution, and the no-auto-trade warning.
+
+`opendart-doctor` also performs no network calls:
+
+```bash
+project-stock opendart-doctor
+```
+
+It prints the network flag, whether `DART_API_KEY` or `OPEN_DART_API_KEY` is
+set, corp-code config status, OpenDART raw cache location, and the no-auto-trade
+warning.
 
 ## Supported FRED Series
 
@@ -95,18 +107,40 @@ project-stock ingest-ecos-series --indicator-id ECOS_BASE_RATE --start-date 2026
 
 Use `--series-config` to point to a private config file.
 
+## OpenDART Disclosure List
+
+OpenDART disclosure list ingestion uses `DART_API_KEY` or `OPEN_DART_API_KEY`.
+The scope is disclosure list metadata only. Full report body download, XBRL
+parsing, and financial statement extraction are deferred.
+
+Fixture ingestion remains offline:
+
+```bash
+project-stock ingest-opendart-disclosures-fixture --fixture tests/fixtures/opendart_disclosure_list_response.json
+```
+
+Real preview and ingestion are available only after explicit network opt-in:
+
+```bash
+project-stock fetch-opendart-disclosures --stock-code 005930 --bgn-de 20260601 --end-de 20260630
+project-stock ingest-opendart-disclosures --stock-code 005930 --bgn-de 20260601 --end-de 20260630
+```
+
+See `docs/opendart_adapter.md` for scope, corp-code config, cache behavior,
+available-from handling, and deferred report body/XBRL work.
+
 ## Raw Response Cache
 
 Real fetches save raw JSON by default:
 
 - FRED: `data/raw/fred/`
 - ECOS: `data/raw/ecos/`
+- OpenDART disclosure list: `data/raw/opendart/`
 
 Downloaded data remains ignored by Git through `data/raw/*`. Cache paths are
-stored in `metadata_json["raw_cache_path"]` on normalized indicator observations
-when available.
+stored in `metadata_json["raw_cache_path"]` when available.
 
-Use `--no-cache-raw` to skip writing raw response JSON.
+Use `--no-cache-raw` to skip writing raw response JSON where supported.
 
 ## Point-In-Time Limitations
 
@@ -118,8 +152,9 @@ and vintage behavior.
 
 ## Offline Tests
 
-The test suite uses fixture parsers for FRED observation responses and ECOS
-StatisticSearch responses. It does not require network access or real API keys.
+The test suite uses fixture parsers for FRED observation responses, ECOS
+StatisticSearch responses, and OpenDART disclosure list responses. It does not
+require network access or real API keys.
 
 The real adapter boundary is tested with:
 
@@ -129,3 +164,9 @@ The real adapter boundary is tested with:
 - fixture-backed CLI ingestion
 - raw cache path generation
 - `available_from` safety
+
+## Boundary
+
+Real data activation only changes source collection. It must not create broker
+orders, auto-trading actions, live buy/sell instructions, or LLM-directed
+investment decisions.

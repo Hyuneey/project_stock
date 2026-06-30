@@ -1,0 +1,15 @@
+companies:
+  - corp_code: "00126380"
+    stock_code: "005930"
+    corp_name: Samsung Electronics
+    market: KOSPI
+    aliases:
+      - Samsung
+      - Samsung Electronics Co., Ltd.
+  - corp_code: "00164779"
+    stock_code: "000660"
+    corp_name: SK Hynix
+    market: KOSPI
+    aliases:
+      - SK hynix Inc.
+      - Hynix

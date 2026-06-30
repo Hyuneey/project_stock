@@ -2,11 +2,19 @@
 
 ## OpenDART
 
-OpenDART is the planned official source for Korean corporate disclosure text.
-The MVP implements a fixture-based collector interface that maps disclosure
-records to `RawDocument`. Real API fetching is intentionally not implemented in
-this PR; future work must read `DART_API_KEY` from the environment and keep tests
-offline.
+OpenDART is the official source for Korean corporate disclosure metadata. The
+MVP fixture collector maps disclosure records to `RawDocument`; the real adapter
+adds opt-in disclosure list ingestion through `fetch-opendart-disclosures` and
+`ingest-opendart-disclosures`.
+
+Real OpenDART fetches run only when `PROJECT_STOCK_ALLOW_NETWORK=true` and
+either `DART_API_KEY` or `OPEN_DART_API_KEY` is set. The supported real-data
+scope is disclosure list rows only. Full report body download, XBRL parsing, and
+financial statement extraction are intentionally deferred.
+
+Raw OpenDART list responses are cached under `data/raw/opendart/` by default and
+remain ignored by Git. Disclosure rows dedupe by `rcept_no` through the document
+checksum `opendart:<rcept_no>`.
 
 ## ECOS
 

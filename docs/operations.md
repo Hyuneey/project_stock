@@ -163,6 +163,24 @@ no earlier than source release metadata and local collection time, but source
 release calendars and vintage behavior still require additional review before
 research use.
 
+## OpenDART Real Data Workflow
+
+OpenDART disclosure list ingestion is opt-in. The normal test suite and local
+demo flows remain offline.
+
+1. Run `project-stock opendart-doctor` to inspect DB URL, network flag, API key
+   presence, corp-code config status, raw cache directory, and no-auto-trade
+   boundary. This command performs no network calls.
+2. Use `ingest-opendart-disclosures-fixture` for offline fixture ingestion.
+3. Set `PROJECT_STOCK_ALLOW_NETWORK=true` only for an intentional real fetch.
+4. Set `DART_API_KEY` or `OPEN_DART_API_KEY` in the environment or `.env`.
+5. Use `fetch-opendart-disclosures` to preview normalized `RawDocument` rows.
+6. Use `ingest-opendart-disclosures` to insert disclosure-list rows into the
+   SQLite warehouse.
+
+The adapter supports disclosure list metadata only. It does not download report
+bodies, parse XBRL, extract financial statements, or create any trade action.
+
 ## Boundary
 
 Allowed outputs are evidence rows, scenario trigger logs, decision-support logs,

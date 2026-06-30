@@ -1,0 +1,32 @@
+{
+  "status": "000",
+  "message": "정상",
+  "page_no": 1,
+  "page_count": 10,
+  "total_count": 2,
+  "total_page": 1,
+  "list": [
+    {
+      "corp_cls": "Y",
+      "corp_name": "Samsung Electronics",
+      "corp_code": "00126380",
+      "stock_code": "005930",
+      "report_nm": "영업실적 등에 대한 전망(공정공시)",
+      "rcept_no": "20260630000001",
+      "flr_nm": "Samsung Electronics",
+      "rcept_dt": "20260630",
+      "rm": "유"
+    },
+    {
+      "corp_cls": "Y",
+      "corp_name": "SK Hynix",
+      "corp_code": "00164779",
+      "stock_code": "000660",
+      "report_nm": "주요사항보고서(영업양수결정)",
+      "rcept_no": "20260630000002",
+      "flr_nm": "SK Hynix",
+      "rcept_dt": "20260630",
+      "rm": "유"
+    }
+  ]
+}
