@@ -10,6 +10,7 @@ from project_stock.dashboard.queries import (
     get_dashboard_snapshot,
     get_evidence_monitor,
     get_event_filter_values,
+    get_kor_semi_drilldown,
     get_latest_backtest_report,
     get_latest_portfolio_review,
     get_latest_thesis_states,
@@ -111,6 +112,73 @@ def _render_thesis_monitor(st: Any, db_url: str) -> None:
     _table(st, rows, "No thesis state snapshots found.")
 
 
+def _render_kor_semi_drilldown(st: Any, db_url: str, memo_dir: Path) -> None:
+    with session_scope(db_url) as session:
+        drilldown = get_kor_semi_drilldown(session, memo_dir)
+    overview = drilldown["overview"]
+    evidence_summary = drilldown["evidence_summary"]
+    related_events = drilldown["related_events"]
+
+    st.subheader("Thesis Summary")
+    st.write("KOR_SEMI_MEMORY_UPCYCLE")
+    st.caption(NO_AUTO_TRADE_DISCLAIMER)
+
+    st.subheader("Current State")
+    metrics = overview.get("metrics", {}) if isinstance(overview, dict) else {}
+    columns = st.columns(4)
+    columns[0].metric("State", overview.get("latest_state") or "none")
+    columns[1].metric("Big Flow", overview.get("big_flow_score") or "n/a")
+    columns[2].metric("Net Evidence", metrics.get("net_evidence_score") or "n/a")
+    columns[3].metric("Risk", metrics.get("risk_score") or "n/a")
+    st.json(
+        {
+            "as_of": overview.get("as_of"),
+            "support_score": metrics.get("support_score"),
+            "contradiction_score": metrics.get("contradiction_score"),
+            "neutral_score": metrics.get("neutral_score"),
+            "transition_reasons": overview.get("transition_reasons", []),
+            "recommended_review_action": overview.get("recommended_review_action"),
+        }
+    )
+
+    st.subheader("Evidence Balance")
+    st.bar_chart(
+        [{"stance": stance, "count": count} for stance, count in evidence_summary.items()],
+        x="stance",
+        y="count",
+    )
+
+    st.subheader("Top Supporting Evidence")
+    _table(st, drilldown["top_supporting_evidence"], "No supporting evidence found.")
+    st.subheader("Top Contradicting Evidence")
+    _table(st, drilldown["top_contradicting_evidence"], "No contradicting evidence found.")
+
+    st.subheader("Triggered Scenarios")
+    _table(st, drilldown["scenario_triggers"], "No KOR_SEMI scenario triggers found.")
+
+    st.subheader("Risk Review Actions")
+    _table(st, drilldown["related_decisions"], "No KOR_SEMI related decisions found.")
+
+    st.subheader("Related Events By Type")
+    st.dataframe(
+        [
+            {"event_type": event_type, "count": count}
+            for event_type, count in related_events["events_by_type"].items()
+        ],
+        use_container_width=True,
+    )
+    st.subheader("Financial Signals")
+    _table(st, related_events["financial_events"], "No financial events found.")
+    st.subheader("Market Signals")
+    _table(st, related_events["market_events"], "No market events found.")
+
+    st.subheader("Memos")
+    _table(st, drilldown["memo_links"], "No KOR_SEMI memo artifacts found.")
+
+    st.subheader("No Auto-Trade Boundary")
+    st.info(NO_AUTO_TRADE_DISCLAIMER)
+
+
 def _render_portfolio_review(st: Any, db_url: str) -> None:
     with session_scope(db_url) as session:
         review = get_latest_portfolio_review(session)
@@ -180,6 +248,7 @@ def render_dashboard(db_url: str, memo_dir: Path) -> None:
             "Event Monitor",
             "Evidence Monitor",
             "Thesis State Monitor",
+            "KOR_SEMI Drilldown",
             "Portfolio Review",
             "Scenario / Emergency",
             "Backtest Validation",
@@ -194,10 +263,12 @@ def render_dashboard(db_url: str, memo_dir: Path) -> None:
     with tabs[3]:
         _render_thesis_monitor(st, db_url)
     with tabs[4]:
-        _render_portfolio_review(st, db_url)
+        _render_kor_semi_drilldown(st, db_url, memo_dir)
     with tabs[5]:
-        _render_scenario_emergency(st, db_url)
+        _render_portfolio_review(st, db_url)
     with tabs[6]:
+        _render_scenario_emergency(st, db_url)
+    with tabs[7]:
         _render_backtest_validation(st, memo_dir)
 
 

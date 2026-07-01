@@ -142,6 +142,21 @@ and contradicting EvidenceLedger rows. It does not execute broker orders,
 auto-trade, create live buy/sell orders, or let an LLM make investment
 decisions.
 
+## KOR_SEMI Dashboard Drilldown
+
+Prepare a local DB focused on the KOR_SEMI thesis pack and launch the dashboard:
+
+```bash
+project-stock prepare-kor-semi-dashboard-demo --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
+```
+
+The dashboard includes a KOR_SEMI drilldown tab with latest thesis state, Big
+Flow score, evidence balance, top evidence, scenario triggers, review-only
+playbook actions, financial signals, market signals, and memo links. It is a
+read-only review surface and does not create broker orders, auto-trade, create
+live buy/sell orders, or let an LLM make investment decisions.
+
 ## Official Data Mock Demo
 
 These commands register official source metadata and ingest one deterministic

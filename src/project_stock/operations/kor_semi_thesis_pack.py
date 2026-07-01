@@ -20,6 +20,7 @@ from project_stock.scenarios.loader import load_scenario_dir
 from project_stock.scenarios.matcher import match_scenarios
 from project_stock.scoring.big_flow import score_big_flow
 from project_stock.schemas.common import EmergencyLevel, SchemaBase
+from project_stock.schemas.decisions import DecisionCreate
 from project_stock.schemas.scoring import BigFlowScoreInput, BigFlowScoreResult
 from project_stock.storage.repository import Repository
 from project_stock.thesis.lifecycle import evaluate_thesis_states
@@ -227,5 +228,28 @@ def run_kor_semi_thesis_pack_demo(
         top_contradicting=top_contradicting,
         big_flow_result=big_flow_result,
         source_coverage=source_coverage,
+    )
+    repo.append_decision(
+        DecisionCreate(
+            decision_type="kor_semi_thesis_pack_review",
+            thesis_id=KOR_SEMI_THESIS_ID,
+            action="review_only",
+            rationale=(
+                f"{len(matched)} KOR_SEMI scenarios matched; "
+                f"{len(activated)} review-only playbooks activated."
+            ),
+            portfolio_impact="human_review_required",
+            metadata_json={
+                "as_of": config.end_date.isoformat(),
+                "matched_scenarios": [match.scenario_id for match in matched],
+                "activated_playbooks": [result.playbook_id for result in activated],
+                "allowed_actions": allowed_actions,
+                "forbidden_actions": forbidden_actions,
+                "big_flow_score": big_flow_result.score if big_flow_result else None,
+                "evidence_counts_by_stance": evidence_counts,
+                "memo_path": memo_path,
+                "no_auto_trade": True,
+            },
+        )
     )
     return preliminary.model_copy(update={"memo_path": memo_path})

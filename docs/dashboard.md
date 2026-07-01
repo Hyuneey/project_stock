@@ -33,6 +33,12 @@ To inspect smoke pipeline outputs, run the fixture smoke against the same DB:
 project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
 ```
 
+For the KOR_SEMI drilldown, prepare a focused demo DB:
+
+```bash
+project-stock prepare-kor-semi-dashboard-demo --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
+```
+
 ## Launch
 
 Print the launch command:
@@ -75,6 +81,24 @@ duplicate evidence skip counts when DecisionLog metadata contains them.
 Shows the latest ThesisStateSnapshot per thesis with support, contradiction,
 net evidence, risk score, transition reasons, and top supporting or
 contradicting evidence when the snapshot metadata links evidence IDs.
+
+### KOR_SEMI Drilldown
+
+Shows a focused view for `KOR_SEMI_MEMORY_UPCYCLE`:
+
+- latest thesis state and snapshot metrics
+- Big Flow Score when available from the thesis pack demo
+- evidence balance across supports, contradicts, and neutral
+- top supporting and contradicting evidence
+- triggered KOR_SEMI scenarios
+- review-only playbook actions from related DecisionLog rows
+- related financial and market events
+- KOR_SEMI memo links
+
+Evidence balance is a review signal, not a trade signal. A high contradiction
+count should direct the user to inspect the top contradicting evidence, scenario
+triggers, and close-review actions. It does not authorize automated selling or
+broker execution.
 
 ### Portfolio Review
 

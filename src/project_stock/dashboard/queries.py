@@ -34,6 +34,22 @@ COUNT_MODELS = {
     "ScenarioTriggerLog": ScenarioTriggerLog,
 }
 
+FINANCIAL_EVENT_TYPES = {
+    "financial_statement_received",
+    "revenue_growth_candidate",
+    "operating_income_growth_candidate",
+    "margin_pressure_candidate",
+    "leverage_change_candidate",
+}
+
+MARKET_EVENT_TYPES = {
+    "market_large_move",
+    "fx_stress_move",
+    "rates_shock_move",
+    "sector_relative_strength_move",
+    "volatility_shock_move",
+}
+
 
 def _iso(value: object | None) -> str | None:
     if value is None:
@@ -90,6 +106,45 @@ def get_latest_memos(memo_dir: Path | str, limit: int = 8) -> list[dict[str, str
         }
         for path in files[:limit]
     ]
+
+
+def get_latest_memo_links(
+    memo_dir: Path | str,
+    thesis_id: str | None = None,
+    pattern: str | None = None,
+    limit: int = 8,
+) -> list[dict[str, str]]:
+    root = Path(memo_dir)
+    if not root.exists():
+        return []
+    tokens = [token.lower() for token in [thesis_id, pattern] if token]
+    if thesis_id == "KOR_SEMI_MEMORY_UPCYCLE":
+        tokens.extend(["kor_semi", "thesis_pack", "thesis_review", "real_data_smoke"])
+    files = sorted(
+        [path for path in root.rglob("*.md") if path.is_file()],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    rows: list[dict[str, str]] = []
+    for path in files:
+        haystack = path.name.lower()
+        if tokens:
+            try:
+                haystack = f"{haystack}\n{path.read_text(encoding='utf-8')[:4000].lower()}"
+            except OSError:
+                pass
+            if not any(token in haystack for token in tokens):
+                continue
+        rows.append(
+            {
+                "name": path.name,
+                "path": str(path),
+                "modified_at": datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
+            }
+        )
+        if len(rows) >= limit:
+            break
+    return rows
 
 
 def get_overview(session: Session, db_url: str, memo_dir: Path | str) -> dict[str, object]:
@@ -315,6 +370,240 @@ def get_latest_decision_logs(
     ]
 
 
+def get_thesis_overview(session: Session, thesis_id: str) -> dict[str, object]:
+    snapshot = session.scalars(
+        select(ThesisStateSnapshot)
+        .where(ThesisStateSnapshot.thesis_id == thesis_id)
+        .order_by(ThesisStateSnapshot.as_of.desc(), ThesisStateSnapshot.created_at.desc())
+        .limit(1)
+    ).first()
+    if snapshot is None:
+        return {
+            "thesis_id": thesis_id,
+            "latest_state": None,
+            "snapshot_id": None,
+            "as_of": None,
+            "big_flow_score": None,
+            "metrics": {},
+            "transition_reasons": [],
+            "recommended_review_action": None,
+        }
+    metadata = _metadata(snapshot.metadata_json)
+    big_flow_score = snapshot.big_flow_score or metadata.get("big_flow_score")
+    if big_flow_score is None:
+        big_flow_snapshot = session.scalars(
+            select(ThesisStateSnapshot)
+            .where(
+                ThesisStateSnapshot.thesis_id == thesis_id,
+                ThesisStateSnapshot.big_flow_score.is_not(None),
+            )
+            .order_by(ThesisStateSnapshot.as_of.desc(), ThesisStateSnapshot.created_at.desc())
+            .limit(1)
+        ).first()
+        if big_flow_snapshot is not None:
+            big_flow_score = big_flow_snapshot.big_flow_score
+    return {
+        "thesis_id": thesis_id,
+        "latest_state": snapshot.status,
+        "snapshot_id": snapshot.snapshot_id,
+        "as_of": _iso(snapshot.as_of),
+        "created_at": _iso(snapshot.created_at),
+        "big_flow_score": big_flow_score,
+        "metrics": {
+            "support_score": metadata.get("support_score"),
+            "contradiction_score": metadata.get("contradiction_score"),
+            "neutral_score": metadata.get("neutral_score"),
+            "net_evidence_score": metadata.get("net_evidence_score"),
+            "risk_score": metadata.get("risk_score"),
+            "confidence_score": metadata.get("confidence_score"),
+        },
+        "transition_reasons": metadata.get("transition_reasons", []),
+        "recommended_review_action": metadata.get("recommended_review_action"),
+        "metadata_json": metadata,
+    }
+
+
+def get_thesis_evidence_summary(session: Session, thesis_id: str) -> dict[str, int]:
+    counts: Counter[str] = Counter(
+        evidence.supports_or_contradicts
+        for evidence in session.scalars(
+            select(EvidenceLedger).where(EvidenceLedger.thesis_id == thesis_id)
+        ).all()
+    )
+    return {
+        "supports": counts.get("supports", 0),
+        "contradicts": counts.get("contradicts", 0),
+        "neutral": counts.get("neutral", 0),
+    }
+
+
+def get_top_thesis_evidence(
+    session: Session,
+    thesis_id: str,
+    stance: str,
+    limit: int = 5,
+) -> list[dict[str, object]]:
+    rows = session.scalars(
+        select(EvidenceLedger)
+        .where(
+            EvidenceLedger.thesis_id == thesis_id,
+            EvidenceLedger.supports_or_contradicts == stance,
+        )
+        .order_by(EvidenceLedger.strength_score.desc(), EvidenceLedger.created_at.desc())
+        .limit(limit)
+    ).all()
+    return [
+        {
+            "evidence_id": evidence.evidence_id,
+            "event_id": evidence.event_id,
+            "scenario_id": evidence.scenario_id,
+            "evidence_type": evidence.evidence_type,
+            "stance": evidence.supports_or_contradicts,
+            "strength_score": evidence.strength_score,
+            "claim": evidence.claim,
+            "created_at": _iso(evidence.created_at),
+        }
+        for evidence in rows
+    ]
+
+
+def get_thesis_scenario_triggers(
+    session: Session,
+    thesis_id: str,
+    limit: int = 20,
+) -> list[dict[str, object]]:
+    triggers = session.scalars(
+        select(ScenarioTriggerLog)
+        .where(ScenarioTriggerLog.thesis_id == thesis_id)
+        .order_by(ScenarioTriggerLog.triggered_at.desc())
+        .limit(limit)
+    ).all()
+    return [
+        {
+            "trigger_log_id": trigger.trigger_log_id,
+            "scenario_id": trigger.scenario_id,
+            "event_id": trigger.event_id,
+            "triggered_at": _iso(trigger.triggered_at),
+            "match_score": trigger.match_score,
+            "result_state": trigger.result_state,
+            "metadata_json": _metadata(trigger.metadata_json),
+        }
+        for trigger in triggers
+    ]
+
+
+def _decision_mentions_thesis(decision: DecisionLog, thesis_id: str) -> bool:
+    if decision.thesis_id == thesis_id:
+        return True
+    metadata = _metadata(decision.metadata_json)
+    return thesis_id in str(metadata)
+
+
+def get_thesis_related_decisions(
+    session: Session,
+    thesis_id: str,
+    limit: int = 20,
+) -> list[dict[str, object]]:
+    decisions = session.scalars(
+        select(DecisionLog).order_by(DecisionLog.timestamp.desc()).limit(limit * 3)
+    ).all()
+    rows = [
+        {
+            "decision_id": decision.decision_id,
+            "timestamp": _iso(decision.timestamp),
+            "decision_type": decision.decision_type,
+            "scenario_id": decision.scenario_id,
+            "event_id": decision.event_id,
+            "action": decision.action,
+            "rationale": decision.rationale,
+            "portfolio_impact": decision.portfolio_impact,
+            "allowed_actions": _metadata(decision.metadata_json).get("allowed_actions", []),
+            "forbidden_actions": _metadata(decision.metadata_json).get("forbidden_actions", []),
+            "metadata_json": _metadata(decision.metadata_json),
+        }
+        for decision in decisions
+        if _decision_mentions_thesis(decision, thesis_id)
+    ]
+    return rows[:limit]
+
+
+def get_thesis_related_events(
+    session: Session,
+    thesis_id: str,
+    limit: int = 100,
+) -> dict[str, object]:
+    event_ids = {
+        str(event_id)
+        for event_id in session.scalars(
+            select(EvidenceLedger.event_id).where(EvidenceLedger.thesis_id == thesis_id)
+        ).all()
+        if event_id
+    }
+    if not event_ids:
+        return {
+            "events_by_type": {},
+            "events": [],
+            "financial_events": [],
+            "market_events": [],
+        }
+    events = session.scalars(
+        select(Event)
+        .options(selectinload(Event.entities))
+        .where(Event.event_id.in_(event_ids))
+        .order_by(Event.available_from.desc(), Event.event_time.desc())
+        .limit(limit)
+    ).all()
+    rows: list[dict[str, object]] = []
+    financial_rows: list[dict[str, object]] = []
+    market_rows: list[dict[str, object]] = []
+    for event in events:
+        metadata = _metadata(event.metadata_json)
+        row = {
+            "event_id": event.event_id,
+            "event_type": event.event_type,
+            "event_time": _iso(event.event_time),
+            "available_from": _iso(event.available_from),
+            "summary": event.summary,
+            "source_id": metadata.get("source_id"),
+            "source_table": metadata.get("source_table"),
+            "symbol": metadata.get("symbol") or metadata.get("stock_code"),
+            "pct_move": metadata.get("pct_move"),
+            "pct_change": metadata.get("pct_change"),
+            "entities": [entity.entity_id for entity in event.entities],
+        }
+        rows.append(row)
+        if event.event_type in FINANCIAL_EVENT_TYPES or metadata.get("source_table") == (
+            "financial_statement_line_items"
+        ):
+            financial_rows.append(row)
+        if event.event_type in MARKET_EVENT_TYPES or metadata.get("source_table") == "market_time_series":
+            market_rows.append(row)
+    return {
+        "events_by_type": dict(Counter(row["event_type"] for row in rows)),
+        "events": rows,
+        "financial_events": financial_rows,
+        "market_events": market_rows,
+    }
+
+
+def get_kor_semi_drilldown(
+    session: Session,
+    memo_dir: Path | str,
+    thesis_id: str = "KOR_SEMI_MEMORY_UPCYCLE",
+) -> dict[str, object]:
+    return {
+        "overview": get_thesis_overview(session, thesis_id),
+        "evidence_summary": get_thesis_evidence_summary(session, thesis_id),
+        "top_supporting_evidence": get_top_thesis_evidence(session, thesis_id, "supports"),
+        "top_contradicting_evidence": get_top_thesis_evidence(session, thesis_id, "contradicts"),
+        "scenario_triggers": get_thesis_scenario_triggers(session, thesis_id),
+        "related_decisions": get_thesis_related_decisions(session, thesis_id),
+        "related_events": get_thesis_related_events(session, thesis_id),
+        "memo_links": get_latest_memo_links(memo_dir, thesis_id=thesis_id),
+        "no_auto_trade": True,
+    }
+
+
 def get_latest_portfolio_review(session: Session) -> dict[str, object] | None:
     decisions = get_latest_decision_logs(session, decision_type="portfolio_review", limit=1)
     if not decisions:
@@ -451,6 +740,7 @@ def get_dashboard_snapshot(
         "thesis_states": get_latest_thesis_states(session),
         "portfolio_review": get_latest_portfolio_review(session),
         "scenario_emergency": get_scenario_emergency_monitor(session),
+        "kor_semi_drilldown": get_kor_semi_drilldown(session, memo_dir),
         "backtest_validation": get_latest_backtest_report(memo_dir),
         "latest_decisions": get_latest_decision_logs(session),
     }
