@@ -9,6 +9,13 @@ generate live buy/sell orders, or let an LLM make investment decisions.
 
 ## Modes
 
+Start with operator preflight and the smoke doctor. Both commands are offline:
+
+```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+```
+
 Dry-run validates config and readiness only:
 
 ```bash
@@ -25,7 +32,12 @@ Real mode requires explicit network opt-in:
 
 ```bash
 PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
 ```
+
+For real API-key execution, follow `docs/real_run_operator_runbook.md`,
+`docs/checklists/real_run_preflight_checklist.md`, and
+`docs/checklists/real_run_postrun_checklist.md`.
 
 ## Required API Keys
 

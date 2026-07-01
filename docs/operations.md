@@ -209,6 +209,26 @@ adapter contracts:
 `PROJECT_STOCK_ALLOW_NETWORK=true` and required FRED, ECOS, and OpenDART keys
 are present. Real mode is bounded by `max_days` and `max_records`.
 
+## Real-Run Operator Sequence
+
+Use this sequence before running real API-key smoke. The preflight, doctor,
+dry-run, and fixture smoke commands make no real API calls:
+
+```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite --memo-dir data/processed/real_run
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite
+PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/real_run.sqlite --memo-dir data/processed/real_run
+```
+
+Run `project-stock real-run-preflight --require-network-enabled --require-keys`
+only when the environment is intentionally prepared for a bounded real run. Use
+`docs/real_run_operator_runbook.md`,
+`docs/checklists/real_run_preflight_checklist.md`, and
+`docs/checklists/real_run_postrun_checklist.md` as the operator record.
+
 ## KOR_SEMI Thesis Pack Workflow
 
 `run-kor-semi-thesis-pack-demo` builds on fixture smoke mode for the upgraded

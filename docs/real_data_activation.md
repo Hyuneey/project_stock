@@ -192,6 +192,18 @@ See `docs/opendart_adapter.md`, `docs/opendart_financials.md`, and
 The smoke pipeline connects FRED, ECOS, OpenDART disclosure, OpenDART financial,
 and KRX adapters into one bounded KOR_SEMI review flow.
 
+Operator preflight should be the first command:
+
+```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+Then run the existing doctor:
+
+```bash
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+```
+
 Dry-run validates config and readiness without network or database writes:
 
 ```bash
@@ -211,6 +223,9 @@ PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config conf
 ```
 
 The smoke config enforces `max_days` and `max_records` so the run stays small.
+Use `docs/real_run_operator_runbook.md` and the checklists under
+`docs/checklists/` for real API-key execution. Dry-run and fixture smoke should
+pass before the bounded real command.
 
 ## Raw Response Cache
 
