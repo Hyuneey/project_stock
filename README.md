@@ -268,6 +268,7 @@ project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.exam
 project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
 PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
 project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock render-real-run-acceptance-template --run-id REAL_RUN_YYYYMMDD_001 --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed --output-path data/processed/real_run_acceptance/REAL_RUN_YYYYMMDD_001.md
 ```
 
 Real mode requires `PROJECT_STOCK_ALLOW_NETWORK=true` plus the configured FRED,
@@ -278,6 +279,12 @@ remain decision support only.
 For real API-key runs, use `docs/real_run_operator_runbook.md` plus the
 preflight and postrun checklists under `docs/checklists/`. The dry-run and
 fixture smoke must pass before the bounded real command.
+
+Generated real-run acceptance reports should be written under
+`data/processed/real_run_acceptance/`, which remains ignored under `data/`.
+Do not commit raw data, raw cache files, SQLite database files, generated
+acceptance reports, or real API outputs unless a document is explicitly
+sanitized like `docs/reports/real_run_acceptance_example.sanitized.md`.
 
 ## Event Normalization Demo
 
@@ -339,6 +346,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock real-data-smoke-doctor`: validates real-data smoke config and readiness offline.
 - `project-stock run-real-data-smoke`: runs dry-run or opt-in real real-data smoke flow.
 - `project-stock run-real-data-smoke-fixture`: runs the offline fixture-backed real-data smoke flow.
+- `project-stock render-real-run-acceptance-template`: renders an offline real-run acceptance report template.
 - `project-stock normalize-events`: normalizes all collected records into events.
 - `project-stock normalize-financial-events`: normalizes summary financial rows into events.
 - `project-stock normalize-events-from-documents`: normalizes RawDocument records.

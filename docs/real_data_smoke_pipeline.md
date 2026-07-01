@@ -33,11 +33,17 @@ Real mode requires explicit network opt-in:
 ```bash
 PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
 project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock render-real-run-acceptance-template --run-id REAL_RUN_YYYYMMDD_001 --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed --output-path data/processed/real_run_acceptance/REAL_RUN_YYYYMMDD_001.md
 ```
 
 For real API-key execution, follow `docs/real_run_operator_runbook.md`,
 `docs/checklists/real_run_preflight_checklist.md`, and
 `docs/checklists/real_run_postrun_checklist.md`.
+After launching the dashboard, review the KOR_SEMI drilldown, render the
+acceptance report, manually choose the acceptance decision, and confirm no
+automated trading occurred. Reports generated under
+`data/processed/real_run_acceptance/` are generated outputs and should not be
+committed unless sanitized.
 
 ## Required API Keys
 
@@ -106,3 +112,6 @@ The smoke pipeline is not a full historical ingestion job or vintage database.
 It uses conservative `available_from` handling but source-specific calendars,
 publication lags, market holidays, revisions, and provider availability require
 additional validation before research use.
+
+Do not commit raw data, raw cache files, SQLite database files, generated
+acceptance reports, or real API outputs.
