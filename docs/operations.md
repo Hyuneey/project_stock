@@ -209,6 +209,32 @@ adapter contracts:
 `PROJECT_STOCK_ALLOW_NETWORK=true` and required FRED, ECOS, and OpenDART keys
 are present. Real mode is bounded by `max_days` and `max_records`.
 
+## KOR_SEMI Thesis Pack Workflow
+
+`run-kor-semi-thesis-pack-demo` builds on fixture smoke mode for the upgraded
+`KOR_SEMI_MEMORY_UPCYCLE` v2 thesis pack:
+
+1. Initialize or reuse the SQLite DB.
+2. Run fixture-backed real-data smoke ingestion for FRED, ECOS, OpenDART, and
+   KRX.
+3. Normalize events and append thesis-linked evidence.
+4. Match the KOR_SEMI v2 scenario bank with deterministic fixture metrics.
+5. Execute linked KOR_SEMI v2 playbooks in review-only mode.
+6. Score the KOR_SEMI Big Flow fixture when provided.
+7. Evaluate thesis state snapshots with the Big Flow score.
+8. Render `kor_semi_thesis_pack_memo_<date>.md`.
+
+The command is offline and deterministic by default:
+
+```bash
+project-stock run-kor-semi-thesis-pack-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+```
+
+Allowed actions are review prompts such as `no_new_buy_review`,
+`reduce_risk_review`, `close_review_required`, and `request_human_review`.
+Forbidden actions include broker orders, auto-trading, live buy/sell orders,
+and LLM direct trade decisions.
+
 ## Real Data Activation Workflow
 
 FRED and ECOS real adapters are opt-in. The normal test suite and local demos

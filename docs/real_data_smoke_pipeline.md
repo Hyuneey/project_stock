@@ -72,6 +72,22 @@ project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sq
 Smoke outputs appear in the existing dashboard sections for events, evidence,
 thesis states, portfolio review, and memo artifacts.
 
+## KOR_SEMI Thesis Pack Fixture Extension
+
+The KOR_SEMI v2 thesis pack uses the same smoke config and fixtures, then adds
+deterministic KOR_SEMI scenario metrics, v2 playbook execution, and Big Flow
+scoring:
+
+```bash
+project-stock run-kor-semi-thesis-pack-demo --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+```
+
+Fixture mode is expected to produce both supportive and contradicting KOR_SEMI
+evidence. Examples include revenue growth support from OpenDART financial line
+items and margin/rate/FX/market stress contradiction from financial, FRED/ECOS,
+and KRX-derived events. At least one v2 KOR_SEMI scenario is triggered from the
+deterministic metrics, and linked playbooks return risk-review actions only.
+
 ## Limitations
 
 The smoke pipeline is not a full historical ingestion job or vintage database.

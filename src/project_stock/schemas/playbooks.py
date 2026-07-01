@@ -13,11 +13,13 @@ class PlaybookActivation(SchemaBase):
 class PlaybookDefinition(SchemaBase):
     playbook_id: str
     version: str
+    description: str | None = None
     linked_scenarios: list[str]
     activation: PlaybookActivation
     allowed_actions: list[str]
     forbidden_actions: list[str]
     cooldown: dict[str, object] = Field(default_factory=dict)
+    no_auto_trade: bool = True
 
 
 class PlaybookExecutionResult(SchemaBase):

@@ -62,9 +62,13 @@ class ScenarioDefinition(SchemaBase):
     description: str
     trigger: TriggerGroup
     expected_path: dict[str, str] = Field(default_factory=dict)
+    evidence_to_watch: list[str] = Field(default_factory=list)
     risk_action: list[str] = Field(default_factory=list)
     thesis_action: dict[str, object] = Field(default_factory=dict)
+    invalidation: dict[str, object] = Field(default_factory=dict)
+    resolution: dict[str, object] = Field(default_factory=dict)
     expiry: dict[str, object] = Field(default_factory=dict)
+    no_auto_trade: bool = True
 
 
 class ConditionEvaluation(SchemaBase):

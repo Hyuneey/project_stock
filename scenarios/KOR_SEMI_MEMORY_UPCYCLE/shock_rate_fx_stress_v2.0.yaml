@@ -1,0 +1,50 @@
+scenario_id: KOR_SEMI_SHOCK_RATE_FX_STRESS_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: shock
+horizon: "1 day to 1 month"
+description: >
+  A US-rate and USDKRW shock raises discount-rate and foreign-flow pressure for
+  Korean semiconductor exposure.
+trigger:
+  mode: all_of
+  required:
+    - metric: US10Y_CHANGE_5D_BP
+      operator: ">="
+      value: 20.0
+    - metric: USDKRW_CHANGE_5D_PCT
+      operator: ">="
+      value: 1.5
+  optional:
+    - metric: VIX_CHANGE_5D_PCT
+      operator: ">="
+      value: 15.0
+  min_match_score: 66
+expected_path:
+  T0: Confirm cross-asset transmission and FX stress.
+  T1_to_T5: Check whether KRX semiconductor beta and foreign flows deteriorate.
+  T5_to_T20: Require close review before changing thesis state.
+evidence_to_watch:
+  - rate_policy_relevant
+  - rates_shock_move
+  - fx_stress_move
+  - volatility_shock_move
+thesis_action:
+  default: defer_to_close_review
+  review: close_review_required
+risk_action:
+  - no_new_buy_review
+  - reduce_risk_review
+  - close_review_required
+  - request_human_review
+invalidation:
+  if:
+    - FX/rate stress persists and foreign flow turns negative.
+resolution:
+  if:
+    - US10Y, USDKRW, and VIX retrace below trigger thresholds.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: daily
+no_auto_trade: true

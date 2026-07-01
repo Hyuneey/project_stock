@@ -1,0 +1,54 @@
+scenario_id: KOR_SEMI_BULL_MEMORY_UPCYCLE_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: bull
+horizon: "1 to 6 months"
+description: >
+  Memory price improvement, positive operating-income signals, and semiconductor
+  relative strength confirm the upcycle path.
+trigger:
+  mode: min_score
+  required:
+    - metric: THESIS_ID
+      operator: "=="
+      value: KOR_SEMI_MEMORY_UPCYCLE
+  optional:
+    - metric: MEMORY_PRICE_CHANGE_1M_PCT
+      operator: ">="
+      value: 3.0
+    - metric: OPERATING_INCOME_CHANGE_YOY_PCT
+      operator: ">"
+      value: 0.0
+    - metric: SOX_CHANGE_5D_PCT
+      operator: ">="
+      value: 2.0
+    - metric: KRX_SEMI_ETF_CHANGE_5D_PCT
+      operator: ">="
+      value: 2.0
+  min_match_score: 50
+expected_path:
+  T0: Confirm positive evidence quality and source coverage.
+  T5_to_T20: Check whether revisions and relative strength persist.
+  T20_plus: Move to monthly thesis review before any portfolio change.
+evidence_to_watch:
+  - operating_income_growth_candidate
+  - revenue_growth_candidate
+  - sector_relative_strength_move
+thesis_action:
+  default: maintain_active_review
+  review: monthly_thesis_review
+risk_action:
+  - update_thesis_watchlist
+  - request_human_review
+invalidation:
+  if:
+    - Margin pressure offsets revenue growth.
+    - SOX or KRX semiconductor relative strength fails.
+resolution:
+  if:
+    - Positive revision breadth persists through monthly review.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: monthly
+no_auto_trade: true

@@ -123,6 +123,25 @@ to start the local Streamlit process. The dashboard is read-only review support
 and does not create broker orders, live trading instructions, or LLM-directed
 buy/sell decisions.
 
+## KOR_SEMI Thesis Pack Demo
+
+The first real thesis pack upgrades `KOR_SEMI_MEMORY_UPCYCLE` to version `2.0`
+and connects the official adapter fixtures, scenario bank, review-only
+playbooks, Big Flow Score fixture, evidence generation, thesis lifecycle, and a
+dedicated memo.
+
+```bash
+project-stock run-kor-semi-thesis-pack-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock score-big-flow --fixture tests/fixtures/big_flow_kor_semi_v2.json
+```
+
+The demo remains fully offline and deterministic. It writes
+`kor_semi_thesis_pack_memo_<date>.md`, triggers at least one KOR_SEMI scenario
+from fixture metrics, returns review-only risk actions, and creates supporting
+and contradicting EvidenceLedger rows. It does not execute broker orders,
+auto-trade, create live buy/sell orders, or let an LLM make investment
+decisions.
+
 ## Official Data Mock Demo
 
 These commands register official source metadata and ingest one deterministic
