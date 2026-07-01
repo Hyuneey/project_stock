@@ -86,14 +86,26 @@ review-only playbooks, evaluates thesis state, and writes
 
 ## Dashboard Inspection
 
-After running the demo, use:
+Prepare drilldown demo data and launch the dashboard:
 
 ```bash
-project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock prepare-kor-semi-dashboard-demo --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
 ```
 
-Inspect the Event Monitor, Evidence Monitor, Thesis State Monitor, Scenario /
-Emergency Monitor, and memo links.
+Inspect the KOR_SEMI Drilldown tab for:
+
+- latest thesis state and Big Flow Score
+- evidence balance by stance
+- top supporting and contradicting evidence
+- triggered scenarios
+- review-only playbook actions
+- financial and market signals
+- memo links
+
+Evidence balance should be interpreted as a review queue. Supportive evidence
+identifies what strengthens the thesis, while contradicting evidence identifies
+risks that may require close review. It is not a buy/sell instruction.
 
 ## Limitations
 

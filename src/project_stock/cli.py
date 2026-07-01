@@ -1246,6 +1246,60 @@ def prepare_dashboard_demo(
 
 
 @app.command()
+def prepare_kor_semi_dashboard_demo(
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(
+        Path("scenarios/KOR_SEMI_MEMORY_UPCYCLE"),
+        "--scenario-dir",
+    ),
+    playbook_dir: Path = typer.Option(Path("playbooks"), "--playbook-dir"),
+    big_flow_fixture: Path = typer.Option(DEFAULT_BIG_FLOW_FIXTURE, "--big-flow-fixture"),
+    portfolio_fixture: Path = typer.Option(
+        Path("tests/fixtures/portfolio_holdings_core_satellite.json"),
+        "--portfolio-fixture",
+    ),
+    portfolio_config: Path = typer.Option(Path("configs/portfolio.example.yaml"), "--portfolio-config"),
+) -> None:
+    init_database(db_url)
+    with session_scope(db_url) as session:
+        thesis_pack_result = run_kor_semi_thesis_pack_demo_flow(
+            session,
+            config_path=config,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+            playbook_dir=playbook_dir,
+            memo_dir=memo_dir,
+            big_flow_fixture=big_flow_fixture,
+        )
+        portfolio_result = run_portfolio_review_demo_flow(
+            session=session,
+            as_of=thesis_pack_result.as_of,
+            portfolio_fixture=portfolio_fixture,
+            portfolio_config=portfolio_config,
+            memo_dir=memo_dir,
+            thesis_dir=thesis_dir,
+            scenario_dir=scenario_dir,
+        )
+    launch_command = _dashboard_command(db_url, memo_dir)
+    _echo_json(
+        {
+            "status": "ready",
+            "db_url": db_url,
+            "memo_dir": str(memo_dir),
+            "kor_semi_memo_path": thesis_pack_result.memo_path,
+            "portfolio_memo_path": portfolio_result.memo_path,
+            "matched_scenarios": thesis_pack_result.matched_scenarios,
+            "allowed_actions": thesis_pack_result.allowed_actions,
+            "dashboard_command": " ".join(launch_command),
+            "no_auto_trade": True,
+        }
+    )
+
+
+@app.command()
 def run_daily(
     as_of: str = typer.Option(..., "--as-of"),
     db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),

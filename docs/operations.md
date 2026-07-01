@@ -228,12 +228,17 @@ The command is offline and deterministic by default:
 
 ```bash
 project-stock run-kor-semi-thesis-pack-demo --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
+project-stock prepare-kor-semi-dashboard-demo --db-url sqlite:///./data/warehouse/kor_semi_dashboard.sqlite --memo-dir data/processed/kor_semi_dashboard
 ```
 
 Allowed actions are review prompts such as `no_new_buy_review`,
 `reduce_risk_review`, `close_review_required`, and `request_human_review`.
 Forbidden actions include broker orders, auto-trading, live buy/sell orders,
 and LLM direct trade decisions.
+
+`prepare-kor-semi-dashboard-demo` runs the thesis pack demo, runs portfolio
+review for dashboard context, writes KOR_SEMI memo artifacts, and prints the
+matching `run-dashboard` command. It remains offline and fixture-backed.
 
 ## Real Data Activation Workflow
 
