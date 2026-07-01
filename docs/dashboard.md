@@ -33,6 +33,21 @@ To inspect smoke pipeline outputs, run the fixture smoke against the same DB:
 project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
 ```
 
+For real API-key runs, prepare and review the same DB with the operator-safe
+sequence:
+
+```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite --memo-dir data/processed/real_run
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite
+PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/real_run.sqlite --memo-dir data/processed/real_run
+```
+
+Use `docs/real_run_operator_runbook.md` and the checklists under
+`docs/checklists/` before relying on dashboard views from real API data.
+
 For the KOR_SEMI drilldown, prepare a focused demo DB:
 
 ```bash

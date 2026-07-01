@@ -107,6 +107,24 @@ Evidence balance should be interpreted as a review queue. Supportive evidence
 identifies what strengthens the thesis, while contradicting evidence identifies
 risks that may require close review. It is not a buy/sell instruction.
 
+## Real-Run Operator Sequence
+
+When using real API keys to refresh KOR_SEMI smoke inputs, run the bounded
+operator sequence before reviewing the thesis pack:
+
+```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/kor_semi_real.sqlite --memo-dir data/processed/kor_semi_real
+project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
+project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
+project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/kor_semi_real.sqlite
+PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/kor_semi_real.sqlite
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/kor_semi_real.sqlite --memo-dir data/processed/kor_semi_real
+```
+
+Use `docs/real_run_operator_runbook.md` and the preflight/postrun checklists to
+record the manual review. The KOR_SEMI playbooks still return review-only risk
+actions, never orders.
+
 ## Limitations
 
 - Fixture evidence is deterministic and diagnostic, not proof of profitability.

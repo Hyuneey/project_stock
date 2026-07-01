@@ -262,15 +262,22 @@ OpenDART financial, and KRX adapters can run together for a bounded KOR_SEMI
 demo. Dry-run and fixture modes are fully offline.
 
 ```bash
+project-stock real-run-preflight --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
 project-stock real-data-smoke-doctor --config configs/real_data_smoke.kor_semi.example.yaml
 project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --dry-run
 project-stock run-real-data-smoke-fixture --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+PROJECT_STOCK_ALLOW_NETWORK=true project-stock run-real-data-smoke --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/project_stock.sqlite
+project-stock run-dashboard --db-url sqlite:///./data/warehouse/project_stock.sqlite --memo-dir data/processed
 ```
 
 Real mode requires `PROJECT_STOCK_ALLOW_NETWORK=true` plus the configured FRED,
 ECOS, and OpenDART API keys. Smoke runs are capped by `max_days` and
 `max_records`, write a markdown report under the configured memo directory, and
 remain decision support only.
+
+For real API-key runs, use `docs/real_run_operator_runbook.md` plus the
+preflight and postrun checklists under `docs/checklists/`. The dry-run and
+fixture smoke must pass before the bounded real command.
 
 ## Event Normalization Demo
 
@@ -328,6 +335,7 @@ project-stock append-evidence-candidates --db-url sqlite:///./data/warehouse/pro
 - `project-stock fetch-krx-daily`: fetches opt-in KRX daily market data preview rows.
 - `project-stock ingest-krx-daily`: ingests opt-in KRX daily market data rows.
 - `project-stock ingest-krx-daily-fixture`: ingests KRX daily market fixture rows offline.
+- `project-stock real-run-preflight`: prints real-run environment, key, config, DB, memo, and cache readiness without network calls.
 - `project-stock real-data-smoke-doctor`: validates real-data smoke config and readiness offline.
 - `project-stock run-real-data-smoke`: runs dry-run or opt-in real real-data smoke flow.
 - `project-stock run-real-data-smoke-fixture`: runs the offline fixture-backed real-data smoke flow.

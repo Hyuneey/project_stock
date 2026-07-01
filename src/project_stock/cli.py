@@ -66,8 +66,11 @@ from project_stock.operations.review_loop import (
 )
 from project_stock.operations.real_data_smoke import (
     DEFAULT_REAL_DATA_SMOKE_CONFIG,
+    build_source_statuses,
+    load_real_data_smoke_config,
     real_data_smoke_doctor_payload,
     run_real_data_smoke as run_real_data_smoke_flow,
+    validate_smoke_limits,
 )
 from project_stock.operations.kor_semi_thesis_pack import (
     DEFAULT_BIG_FLOW_FIXTURE,
@@ -119,6 +122,102 @@ def _dashboard_command(db_url: str, memo_dir: Path) -> list[str]:
         "--memo-dir",
         str(memo_dir),
     ]
+
+
+def _env_key_status(names: list[str]) -> dict[str, bool]:
+    return {name: bool(os.getenv(name, "").strip()) for name in names}
+
+
+def _path_status(paths: dict[str, Path | None]) -> dict[str, dict[str, object]]:
+    return {
+        name: {
+            "path": str(path) if path is not None else None,
+            "exists": path.exists() if path is not None else False,
+        }
+        for name, path in paths.items()
+    }
+
+
+def _raw_cache_directory_status() -> dict[str, dict[str, object]]:
+    paths = {
+        "fred": build_raw_cache_path("fred", "DGS10", "YYYY-MM-DD", "YYYY-MM-DD").parent,
+        "ecos": build_raw_cache_path("ecos", "ECOS_BASE_RATE", "YYYY-MM-DD", "YYYY-MM-DD").parent,
+        "opendart": Path("data/raw/opendart"),
+        "opendart_financial": Path("data/raw/opendart/financial"),
+        "krx": Path("data/raw/krx"),
+    }
+    return _path_status(paths)
+
+
+def _missing_real_run_key_groups(source_statuses: list[object]) -> dict[str, list[str]]:
+    missing: dict[str, list[str]] = {}
+    for status in source_statuses:
+        required_keys = getattr(status, "required_api_keys", [])
+        if not getattr(status, "would_run", False) or not required_keys:
+            continue
+        if not getattr(status, "api_key_set", False):
+            missing[getattr(status, "adapter", "unknown")] = list(required_keys)
+    return missing
+
+
+def _real_run_preflight_payload(config_path: Path, db_url: str, memo_dir: Path) -> dict[str, object]:
+    config = load_real_data_smoke_config(config_path)
+    validate_smoke_limits(config)
+    statuses = build_source_statuses(config, "dry_run")
+    source_config_paths = {
+        "ecos_series": config.config_paths.ecos_series,
+        "opendart_corp_codes": config.config_paths.opendart_corp_codes,
+        "krx_symbols": config.config_paths.krx_symbols,
+        "portfolio": config.config_paths.portfolio,
+    }
+    safe_sequence = [
+        f"project-stock real-run-preflight --config {config_path} --db-url {db_url} --memo-dir {memo_dir}",
+        f"project-stock real-data-smoke-doctor --config {config_path}",
+        f"project-stock run-real-data-smoke --config {config_path} --dry-run",
+        f"project-stock run-real-data-smoke-fixture --config {config_path} --db-url {db_url}",
+        f"{NETWORK_ENV_VAR}=true project-stock run-real-data-smoke --config {config_path} --db-url {db_url}",
+        f"project-stock run-dashboard --db-url {db_url} --memo-dir {memo_dir}",
+    ]
+    return {
+        "status": "ok",
+        "config": str(config_path),
+        "config_exists": config_path.exists(),
+        "db_url": db_url,
+        "memo_dir": str(memo_dir),
+        NETWORK_ENV_VAR: os.getenv(NETWORK_ENV_VAR, "false"),
+        "network_enabled": network_enabled(),
+        "api_keys": _env_key_status(
+            [
+                "FRED_API_KEY",
+                "ECOS_API_KEY",
+                "DART_API_KEY",
+                "OPEN_DART_API_KEY",
+                "KRX_AUTH_TOKEN",
+                "KRX_API_KEY",
+            ]
+        ),
+        "source_statuses": [status.model_dump(mode="json") for status in statuses],
+        "missing_required_key_groups": _missing_real_run_key_groups(statuses),
+        "source_config_files": _path_status(source_config_paths),
+        "raw_cache_directories": _raw_cache_directory_status(),
+        "smoke_limits": {
+            "start_date": config.start_date.isoformat(),
+            "end_date": config.end_date.isoformat(),
+            "max_days": config.max_days,
+            "max_records": config.max_records,
+        },
+        "configured_sources": {
+            "fred_series": config.fred_series,
+            "ecos_indicators": config.ecos_indicators,
+            "opendart_companies": [company.model_dump(mode="json") for company in config.opendart_companies],
+            "krx_symbols": config.krx_symbols,
+        },
+        "recommended_next_command": safe_sequence[1],
+        "safe_execution_sequence": safe_sequence,
+        "manual_review_required": True,
+        "no_auto_trade": True,
+        "warning": "Decision support only: no broker execution, no auto-trading, no LLM investment decisions.",
+    }
 
 
 @app.command()
@@ -212,6 +311,36 @@ def real_data_smoke_doctor(
         payload = real_data_smoke_doctor_payload(config)
     except (CollectorConfigError, ValueError) as exc:
         _exit_with_error(exc)
+    _echo_json(payload)
+
+
+@app.command()
+def real_run_preflight(
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    require_network_enabled: bool = typer.Option(False, "--require-network-enabled"),
+    require_keys: bool = typer.Option(False, "--require-keys"),
+) -> None:
+    try:
+        payload = _real_run_preflight_payload(config, db_url, memo_dir)
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+
+    errors: list[str] = []
+    if require_network_enabled and not payload["network_enabled"]:
+        errors.append(f"Network disabled; set {NETWORK_ENV_VAR}=true before bounded real runs.")
+    missing_keys = payload["missing_required_key_groups"]
+    if require_keys and isinstance(missing_keys, dict) and missing_keys:
+        details = "; ".join(
+            f"{adapter}: {' or '.join(keys)}" for adapter, keys in sorted(missing_keys.items())
+        )
+        errors.append(f"Missing required API keys for configured sources: {details}.")
+    if errors:
+        payload["status"] = "error"
+        payload["errors"] = errors
+        _echo_json(payload)
+        raise typer.Exit(1)
     _echo_json(payload)
 
 
