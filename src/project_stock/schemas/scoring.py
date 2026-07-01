@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import Field
+from typing import Any
+
+from pydantic import Field, model_validator
 
 from project_stock.schemas.common import EmergencyLevel, SchemaBase
 
@@ -14,6 +16,25 @@ class BigFlowScoreInput(SchemaBase):
     market: float = Field(ge=0, le=100)
     macro: float = Field(ge=0, le=100)
     risk_penalty: float = Field(ge=0, le=100)
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_descriptive_component_names(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        aliases = {
+            "secular_tailwind": "secular",
+            "industry_cycle": "industry",
+            "earnings_revision": "earnings",
+            "valuation_sanity": "valuation",
+            "price_confirmation": "market",
+            "macro_fit": "macro",
+        }
+        normalized = dict(data)
+        for source, target in aliases.items():
+            if source in normalized and target not in normalized:
+                normalized[target] = normalized.pop(source)
+        return normalized
 
 
 class BigFlowScoreResult(SchemaBase):

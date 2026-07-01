@@ -34,7 +34,13 @@ ENTITY_THESIS_HINTS: dict[str, set[str]] = {
         "SOX",
         "USDKRW",
         "US10Y",
+        "VIX",
         "RATES",
+        "FX",
+        "FOREIGN_FLOWS",
+        "KOSPI200",
+        "SEMI_ETF_PROXY",
+        "AI_CAPEX",
     },
     "AI_INFRASTRUCTURE": {
         "AI_INFRASTRUCTURE",
@@ -43,7 +49,9 @@ ENTITY_THESIS_HINTS: dict[str, set[str]] = {
         "000660",
         "SOX",
         "US10Y",
+        "VIX",
         "RATES",
+        "AI_CAPEX",
     },
 }
 
@@ -51,6 +59,8 @@ SUPPORTIVE_EVENT_TYPES = {
     "earnings_guidance",
     "macro_surprise_positive",
     "sector_news_headline",
+    "revenue_growth_candidate",
+    "operating_income_growth_candidate",
 }
 
 CONTRADICTING_EVENT_TYPES = {
@@ -62,6 +72,8 @@ CONTRADICTING_EVENT_TYPES = {
     "fx_stress_move",
     "rates_shock_move",
     "volatility_shock_move",
+    "margin_pressure_candidate",
+    "leverage_change_candidate",
 }
 
 SEVERITY_BY_EVENT_TYPE: dict[str, float] = {
@@ -84,6 +96,11 @@ SEVERITY_BY_EVENT_TYPE: dict[str, float] = {
     "rates_shock_move": 4.0,
     "sector_relative_strength_move": 3.5,
     "volatility_shock_move": 4.0,
+    "financial_statement_received": 2.0,
+    "revenue_growth_candidate": 3.5,
+    "operating_income_growth_candidate": 4.0,
+    "margin_pressure_candidate": 4.0,
+    "leverage_change_candidate": 3.5,
 }
 
 SCENARIO_EVENT_HINTS: dict[str, set[str]] = {
@@ -109,6 +126,41 @@ SCENARIO_EVENT_HINTS: dict[str, set[str]] = {
     "KOR_SEMI_GRINDING_BASE": {
         "disclosure_received",
         "macro_indicator_release",
+    },
+    "KOR_SEMI_BULL_MEMORY_UPCYCLE_V2": {
+        "earnings_guidance",
+        "revenue_growth_candidate",
+        "operating_income_growth_candidate",
+        "sector_relative_strength_move",
+        "market_large_move",
+    },
+    "KOR_SEMI_BASE_GRADUAL_RECOVERY_V2": {
+        "disclosure_received",
+        "financial_statement_received",
+        "macro_indicator_release",
+        "revenue_growth_candidate",
+    },
+    "KOR_SEMI_BEAR_REVISION_DETERIORATION_V2": {
+        "earnings_revision_candidate",
+        "margin_pressure_candidate",
+        "leverage_change_candidate",
+        "risk_disclosure_candidate",
+    },
+    "KOR_SEMI_SHOCK_RATE_FX_STRESS_V2": {
+        "rate_policy_relevant",
+        "fx_stress_move",
+        "rates_shock_move",
+        "volatility_shock_move",
+    },
+    "KOR_SEMI_SHOCK_AI_CAPEX_SLOWDOWN_V2": {
+        "sector_news_headline",
+        "company_news_headline",
+        "risk_disclosure_candidate",
+    },
+    "KOR_SEMI_SHOCK_SEMICONDUCTOR_PRICE_BREAKDOWN_V2": {
+        "market_large_move",
+        "sector_relative_strength_move",
+        "volatility_shock_move",
     },
 }
 
@@ -217,6 +269,24 @@ def match_thesis_relevance(
 def classify_evidence_stance(event: Event, thesis_id: str) -> EvidenceStance:
     metadata = event.metadata_json or {}
     pct_move = metadata.get("pct_move")
+    if thesis_id == "KOR_SEMI_MEMORY_UPCYCLE":
+        if event.event_type in {
+            "revenue_growth_candidate",
+            "operating_income_growth_candidate",
+            "earnings_guidance",
+        }:
+            return "supports"
+        if event.event_type in {
+            "margin_pressure_candidate",
+            "leverage_change_candidate",
+            "fx_stress_move",
+            "rates_shock_move",
+            "volatility_shock_move",
+            "rate_policy_relevant",
+            "earnings_revision_candidate",
+            "risk_disclosure_candidate",
+        }:
+            return "contradicts"
     if event.event_type in SUPPORTIVE_EVENT_TYPES:
         return "supports"
     if event.event_type in CONTRADICTING_EVENT_TYPES:
@@ -261,7 +331,8 @@ def _scenario_link(
     scenarios: list[ScenarioDefinition],
 ) -> str | None:
     metadata_text = _event_text(event).lower()
-    for scenario in scenarios:
+    ordered_scenarios = sorted(scenarios, key=lambda item: (item.version != "1.0", item.scenario_id))
+    for scenario in ordered_scenarios:
         if scenario.thesis_id != thesis_id:
             continue
         hints = SCENARIO_EVENT_HINTS.get(scenario.scenario_id, set())

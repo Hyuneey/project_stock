@@ -1,0 +1,82 @@
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+title: Korean semiconductor memory upcycle
+created_at: "2026-06-29"
+last_reviewed_at: "2026-07-01"
+time_horizon:
+  investment: "6 to 24 months"
+  structural: "3 to 5 years"
+horizon:
+  investment: "6 to 24 months"
+  review: "daily risk / monthly thesis / quarterly full review"
+core_claim: >
+  Korean memory leaders can benefit from a memory price recovery, resilient
+  AI/server demand, improving operating-income revisions, and confirmed
+  semiconductor relative strength, provided FX, rates, and crowding risks remain
+  contained.
+beneficiaries:
+  primary:
+    - Samsung Electronics / 005930
+    - SK Hynix / 000660
+    - Korean semiconductor ETF proxy / SEMI_ETF_PROXY
+  secondary:
+    - KOSPI200 semiconductor complex
+    - Semiconductor equipment and materials
+core_assumptions:
+  - id: A1
+    statement: Memory price cycle improvement continues.
+  - id: A2
+    statement: AI and server demand remain resilient.
+  - id: A3
+    statement: EPS and operating-income revisions improve for 005930 and 000660.
+  - id: A4
+    statement: Foreign flow and USDKRW stability do not overwhelm equity duration.
+  - id: A5
+    statement: SOX and KRX semiconductor relative strength confirm the thesis.
+supporting_evidence_types:
+  - revenue_growth_candidate
+  - operating_income_growth_candidate
+  - earnings_guidance
+  - sector_relative_strength_move
+  - market_large_move
+  - macro_surprise_positive
+contradicting_evidence_types:
+  - margin_pressure_candidate
+  - leverage_change_candidate
+  - earnings_revision_candidate
+  - rate_policy_relevant
+  - fx_stress_move
+  - rates_shock_move
+  - volatility_shock_move
+  - risk_disclosure_candidate
+invalidation_conditions:
+  - Memory price improvement fails or reverses for multiple review periods.
+  - EPS or operating-income revisions deteriorate materially for 005930 or 000660.
+  - AI capex slowdown reduces server memory demand visibility.
+  - USDKRW or US rates shock persists and foreign flows remain negative.
+  - SOX or KRX semiconductor relative strength breaks down for a full monthly review.
+source_mappings:
+  FRED:
+    - DGS10
+    - DGS2
+    - VIXCLS
+    - FEDFUNDS
+  ECOS:
+    - ECOS_BASE_RATE
+    - ECOS_CPI_KR
+  OpenDART:
+    - "005930 disclosure list"
+    - "000660 disclosure list"
+    - "005930 financial line items"
+    - "000660 financial line items"
+  KRX:
+    - "005930"
+    - "000660"
+    - KOSPI200
+    - SEMI_ETF_PROXY
+state_history:
+  - date: "2026-07-01"
+    state: active
+    reason: Upgraded real-adapter thesis pack with deterministic review-only scenarios.
+no_auto_trade: true

@@ -1,0 +1,26 @@
+playbook_id: PB_KOR_SEMI_AI_CAPEX_SLOWDOWN_V2
+version: "2.0"
+description: Review-only response for AI capex slowdown signals.
+linked_scenarios:
+  - KOR_SEMI_SHOCK_AI_CAPEX_SLOWDOWN_V2
+activation:
+  emergency_level_min: E2
+  required_confirmation:
+    - ai_capex_slowdown_confirmed
+allowed_actions:
+  - no_new_buy_review
+  - close_review_required
+  - update_thesis_watchlist
+  - request_human_review
+  - do_not_auto_trade
+forbidden_actions:
+  - broker_order
+  - auto_trade
+  - live_buy_sell_order
+  - llm_direct_trade_decision
+cooldown:
+  min_review_interval: "1 week"
+  reentry_requires:
+    - demand_signal_recovery
+    - close_review_completed
+no_auto_trade: true

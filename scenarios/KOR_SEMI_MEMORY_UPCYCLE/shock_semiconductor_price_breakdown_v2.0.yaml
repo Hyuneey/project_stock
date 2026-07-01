@@ -1,0 +1,51 @@
+scenario_id: KOR_SEMI_SHOCK_SEMICONDUCTOR_PRICE_BREAKDOWN_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: shock
+horizon: "1 day to 1 month"
+description: >
+  KRX semiconductor, SOX, or related price action breaks down enough to demand
+  a risk review even if fundamentals are not yet fully updated.
+trigger:
+  mode: min_score
+  required:
+    - metric: THESIS_ID
+      operator: "=="
+      value: KOR_SEMI_MEMORY_UPCYCLE
+  optional:
+    - metric: KRX_SEMI_ETF_CHANGE_5D_PCT
+      operator: "<="
+      value: -4.0
+    - metric: SOX_CHANGE_5D_PCT
+      operator: "<="
+      value: -3.0
+    - metric: SEMI_RELATIVE_STRENGTH_20D
+      operator: "<"
+      value: 0.0
+  min_match_score: 50
+expected_path:
+  T0: Confirm whether price action is broad semiconductor weakness.
+  T1_to_T5: Compare KRX, SOX, VIX, and FX transmission.
+  T5_to_T20: Require close review if breakdown persists.
+evidence_to_watch:
+  - market_large_move
+  - sector_relative_strength_move
+  - volatility_shock_move
+thesis_action:
+  default: defer_to_close_review
+  review: close_review_required
+risk_action:
+  - no_new_buy_review
+  - reduce_risk_review
+  - request_human_review
+invalidation:
+  if:
+    - Relative strength breakdown persists through monthly review.
+resolution:
+  if:
+    - KRX semiconductor and SOX regain relative strength.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: daily
+no_auto_trade: true

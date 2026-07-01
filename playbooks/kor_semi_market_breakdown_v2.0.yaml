@@ -1,0 +1,27 @@
+playbook_id: PB_KOR_SEMI_MARKET_BREAKDOWN_V2
+version: "2.0"
+description: Review-only response for semiconductor market breakdown.
+linked_scenarios:
+  - KOR_SEMI_SHOCK_SEMICONDUCTOR_PRICE_BREAKDOWN_V2
+activation:
+  emergency_level_min: E2
+  required_confirmation:
+    - market_breakdown_confirmed
+allowed_actions:
+  - no_new_buy_review
+  - reduce_risk_review
+  - close_review_required
+  - update_thesis_watchlist
+  - request_human_review
+  - do_not_auto_trade
+forbidden_actions:
+  - broker_order
+  - auto_trade
+  - live_buy_sell_order
+  - llm_direct_trade_decision
+cooldown:
+  min_review_interval: "1 trading day"
+  reentry_requires:
+    - semiconductor_relative_strength_recovery
+    - close_review_completed
+no_auto_trade: true

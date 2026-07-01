@@ -1,0 +1,45 @@
+scenario_id: KOR_SEMI_BASE_GRADUAL_RECOVERY_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: base
+horizon: "1 to 9 months"
+description: >
+  The thesis progresses gradually with mixed but improving financial and market
+  evidence, requiring continued review rather than immediate action.
+trigger:
+  mode: all_of
+  required:
+    - metric: THESIS_ID
+      operator: "=="
+      value: KOR_SEMI_MEMORY_UPCYCLE
+    - metric: MEMORY_PRICE_CHANGE_1M_PCT
+      operator: ">="
+      value: 0.0
+    - metric: VIX_LEVEL
+      operator: "<="
+      value: 25.0
+expected_path:
+  T0: Preserve watch items and validate evidence freshness.
+  T5_to_T20: Look for improving revisions without macro shock.
+  T20_plus: Continue monthly thesis state review.
+evidence_to_watch:
+  - financial_statement_received
+  - macro_indicator_release
+  - revenue_growth_candidate
+thesis_action:
+  default: keep_active_or_watch
+  review: monthly_thesis_review
+risk_action:
+  - update_thesis_watchlist
+  - request_human_review
+invalidation:
+  if:
+    - Revenue growth fails to translate to operating-income improvement.
+resolution:
+  if:
+    - Bull or bear scenario conditions dominate.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: monthly
+no_auto_trade: true

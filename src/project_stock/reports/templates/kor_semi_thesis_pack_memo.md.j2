@@ -1,0 +1,73 @@
+# KOR_SEMI Thesis Pack Memo
+
+Date: {{ result.as_of }}
+
+{{ disclaimer }}
+
+## Thesis Summary
+
+- Thesis: {{ result.thesis_id }}
+- Current thesis state: {{ result.thesis_state or "not available" }}
+- Normalized events in smoke fixture: {{ result.normalized_event_count }}
+- KOR_SEMI evidence count: {{ result.evidence_count }}
+- Evidence stance counts: {{ result.evidence_counts_by_stance }}
+
+## Top Supporting Evidence
+
+{% if top_supporting %}
+{% for evidence in top_supporting %}
+- {{ evidence.evidence_id }}: {{ evidence.claim }} (strength {{ evidence.strength_score }})
+{% endfor %}
+{% else %}
+- No supporting evidence.
+{% endif %}
+
+## Top Contradicting Evidence
+
+{% if top_contradicting %}
+{% for evidence in top_contradicting %}
+- {{ evidence.evidence_id }}: {{ evidence.claim }} (strength {{ evidence.strength_score }})
+{% endfor %}
+{% else %}
+- No contradicting evidence.
+{% endif %}
+
+## Triggered Scenarios
+
+{% if result.matched_scenarios %}
+{% for scenario_id in result.matched_scenarios %}
+- {{ scenario_id }}
+{% endfor %}
+{% else %}
+- No scenario matched.
+{% endif %}
+
+## Playbook Risk Review Actions
+
+- Activated playbooks: {{ result.activated_playbooks }}
+- Allowed review actions: {{ result.allowed_actions }}
+- Forbidden actions: {{ result.forbidden_actions }}
+
+## Big Flow Score
+
+{% if big_flow %}
+- Score: {{ big_flow.score }}
+- State hint: {{ big_flow.state_hint }}
+- Components: {{ big_flow.components }}
+- Risk penalty: {{ big_flow.risk_penalty }}
+{% else %}
+- No Big Flow fixture was provided.
+{% endif %}
+
+## Data Source Coverage
+
+{% for source, items in source_coverage.items() %}
+- {{ source }}: {{ items }}
+{% endfor %}
+
+## Limitations
+
+- Fixture mode is deterministic and offline; it is not proof of profitability.
+- Real API calls remain opt-in through `PROJECT_STOCK_ALLOW_NETWORK=true`.
+- Scenario and playbook outputs are review-only decision support.
+- No broker execution, no auto-trading, no live buy/sell orders, and no LLM investment decision logic are authorized.

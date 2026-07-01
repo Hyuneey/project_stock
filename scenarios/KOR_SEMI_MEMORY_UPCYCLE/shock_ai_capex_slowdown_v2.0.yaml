@@ -1,0 +1,46 @@
+scenario_id: KOR_SEMI_SHOCK_AI_CAPEX_SLOWDOWN_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: shock
+horizon: "1 week to 6 months"
+description: >
+  AI capex slowdown headlines weaken server memory demand confidence and can
+  turn supportive semiconductor evidence into a risk review.
+trigger:
+  mode: any_of
+  optional:
+    - metric: AI_CAPEX_SLOWDOWN_HEADLINE
+      operator: "=="
+      value: true
+    - metric: SERVER_MEMORY_ORDER_CUT_FLAG
+      operator: "=="
+      value: true
+    - metric: AI_INFRA_REVISION_1M_PCT
+      operator: "<="
+      value: -5.0
+expected_path:
+  T0: Verify source category and whether the signal is company-specific or broad.
+  T1_to_T5: Compare disclosure, market, and revision evidence.
+  T5_to_T20: Decide whether thesis invalidation conditions need escalation.
+evidence_to_watch:
+  - sector_news_headline
+  - company_news_headline
+  - risk_disclosure_candidate
+thesis_action:
+  default: deteriorating_watch
+  review: close_review_required
+risk_action:
+  - no_new_buy_review
+  - update_thesis_watchlist
+  - request_human_review
+invalidation:
+  if:
+    - AI capex slowdown evidence is confirmed across multiple primary sources.
+resolution:
+  if:
+    - Demand indicators and guidance recover.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: weekly
+no_auto_trade: true

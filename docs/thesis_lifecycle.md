@@ -90,6 +90,27 @@ Archiving is explicit. `archive-thesis` appends an `archived` snapshot with the
 provided reason. It does not mutate prior snapshots. Repeating the same archive
 command for the same `as_of` skips the duplicate unless `--force` is used.
 
+## KOR_SEMI v2 Pack
+
+`KOR_SEMI_MEMORY_UPCYCLE_v2.0.yaml` adds explicit source mappings, supporting
+and contradicting evidence types, and review cadence. The
+`run-kor-semi-thesis-pack-demo` command runs the fixture-backed real-data smoke
+chain, matches KOR_SEMI v2 scenarios, executes review-only playbooks, scores the
+KOR_SEMI Big Flow fixture, and evaluates a ThesisStateSnapshot.
+
+The Big Flow fixture uses descriptive components:
+
+- `secular_tailwind`
+- `industry_cycle`
+- `earnings_revision`
+- `valuation_sanity`
+- `price_confirmation`
+- `macro_fit`
+- `risk_penalty`
+
+The scorer maps these to the existing deterministic Big Flow components before
+snapshot evaluation. No thesis state is a trade instruction.
+
 ## Boundary
 
 Lifecycle outputs are thesis state recommendations, snapshot audit rows, and

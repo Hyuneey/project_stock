@@ -28,11 +28,16 @@ class ThesisDefinition(SchemaBase):
     created_at: date
     last_reviewed_at: date
     time_horizon: dict[str, str]
+    horizon: dict[str, str] = Field(default_factory=dict)
     core_claim: str
     beneficiaries: dict[str, list[str]] = Field(default_factory=dict)
     core_assumptions: list[ThesisAssumption]
+    supporting_evidence_types: list[str] = Field(default_factory=list)
+    contradicting_evidence_types: list[str] = Field(default_factory=list)
     invalidation_conditions: list[str]
+    source_mappings: dict[str, list[str]] = Field(default_factory=dict)
     state_history: list[ThesisStateHistoryItem]
+    no_auto_trade: bool = True
 
 
 class ThesisEvidenceSummary(SchemaBase):

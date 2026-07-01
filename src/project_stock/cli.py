@@ -69,6 +69,10 @@ from project_stock.operations.real_data_smoke import (
     real_data_smoke_doctor_payload,
     run_real_data_smoke as run_real_data_smoke_flow,
 )
+from project_stock.operations.kor_semi_thesis_pack import (
+    DEFAULT_BIG_FLOW_FIXTURE,
+    run_kor_semi_thesis_pack_demo as run_kor_semi_thesis_pack_demo_flow,
+)
 from project_stock.portfolio.review import (
     review_portfolio as review_portfolio_flow,
     run_portfolio_review_demo as run_portfolio_review_demo_flow,
@@ -258,6 +262,36 @@ def run_real_data_smoke_fixture(
                 session=session,
                 thesis_dir=thesis_dir,
                 scenario_dir=scenario_dir,
+            )
+    except (CollectorConfigError, ValueError) as exc:
+        _exit_with_error(exc)
+    _echo_json(result.model_dump(mode="json"))
+
+
+@app.command()
+def run_kor_semi_thesis_pack_demo(
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    thesis_dir: Path = typer.Option(Path("thesis"), "--thesis-dir"),
+    scenario_dir: Path = typer.Option(
+        Path("scenarios/KOR_SEMI_MEMORY_UPCYCLE"),
+        "--scenario-dir",
+    ),
+    playbook_dir: Path = typer.Option(Path("playbooks"), "--playbook-dir"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    big_flow_fixture: Path = typer.Option(DEFAULT_BIG_FLOW_FIXTURE, "--big-flow-fixture"),
+) -> None:
+    init_database(db_url)
+    try:
+        with session_scope(db_url) as session:
+            result = run_kor_semi_thesis_pack_demo_flow(
+                session,
+                config_path=config,
+                thesis_dir=thesis_dir,
+                scenario_dir=scenario_dir,
+                playbook_dir=playbook_dir,
+                memo_dir=memo_dir,
+                big_flow_fixture=big_flow_fixture,
             )
     except (CollectorConfigError, ValueError) as exc:
         _exit_with_error(exc)

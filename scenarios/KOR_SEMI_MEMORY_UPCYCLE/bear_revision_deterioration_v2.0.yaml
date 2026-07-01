@@ -1,0 +1,54 @@
+scenario_id: KOR_SEMI_BEAR_REVISION_DETERIORATION_V2
+thesis_id: KOR_SEMI_MEMORY_UPCYCLE
+version: "2.0"
+status: active
+scenario_type: bear
+horizon: "1 week to 3 months"
+description: >
+  EPS, revenue, or operating-income evidence deteriorates enough to challenge
+  the upcycle thesis.
+trigger:
+  mode: min_score
+  required:
+    - metric: THESIS_ID
+      operator: "=="
+      value: KOR_SEMI_MEMORY_UPCYCLE
+  optional:
+    - metric: EPS_REVISION_1M_PCT
+      operator: "<="
+      value: -3.0
+    - metric: OPERATING_INCOME_CHANGE_YOY_PCT
+      operator: "<"
+      value: 0.0
+    - metric: MARGIN_PRESSURE_FLAG
+      operator: "=="
+      value: true
+    - metric: GUIDANCE_DETERIORATION_FLAG
+      operator: "=="
+      value: true
+  min_match_score: 50
+expected_path:
+  T0: Separate one-off line-item noise from broad revision deterioration.
+  T1_to_T5: Compare 005930 and 000660 evidence breadth.
+  T5_to_T20: Escalate to thesis review if deterioration persists.
+evidence_to_watch:
+  - margin_pressure_candidate
+  - earnings_revision_candidate
+  - risk_disclosure_candidate
+thesis_action:
+  default: deteriorating_watch
+  review: close_review_required
+risk_action:
+  - no_new_buy_review
+  - reduce_risk_review
+  - request_human_review
+invalidation:
+  if:
+    - Operating-income deterioration persists across quarterly review.
+resolution:
+  if:
+    - Revision breadth turns positive and margin pressure clears.
+expiry:
+  valid_until: "2026-12-31"
+  review_frequency: weekly
+no_auto_trade: true
