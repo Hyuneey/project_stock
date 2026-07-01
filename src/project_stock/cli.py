@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 import typer
+from jinja2 import Environment
 from rich.console import Console
 
 from project_stock.backtest.validation import (
@@ -98,6 +99,8 @@ app = typer.Typer(no_args_is_help=True)
 console = Console()
 DEFAULT_OFFICIAL_FIXTURE_DIR = Path("tests/fixtures/official")
 DEFAULT_DASHBOARD_APP = Path(__file__).resolve().parent / "dashboard" / "app.py"
+DEFAULT_REAL_RUN_ACCEPTANCE_TEMPLATE = Path("docs/reports/real_run_acceptance_template.md")
+DEFAULT_REAL_RUN_ACCEPTANCE_DIR = Path("data/processed/real_run_acceptance")
 
 
 def _echo_json(payload: Any) -> None:
@@ -147,6 +150,39 @@ def _raw_cache_directory_status() -> dict[str, dict[str, object]]:
         "krx": Path("data/raw/krx"),
     }
     return _path_status(paths)
+
+
+def _yes_no(value: bool) -> str:
+    return "yes" if value else "no"
+
+
+def _current_git_sha() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def _safe_report_name(run_id: str) -> str:
+    safe = "".join(char if char.isalnum() or char in "._-" else "_" for char in run_id).strip("_")
+    return safe or "real_run"
+
+
+def _render_markdown_template(template_path: Path, context: dict[str, object]) -> str:
+    template = Environment(
+        autoescape=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    ).from_string(template_path.read_text(encoding="utf-8"))
+    return template.render(**context)
 
 
 def _missing_real_run_key_groups(source_statuses: list[object]) -> dict[str, list[str]]:
@@ -342,6 +378,65 @@ def real_run_preflight(
         _echo_json(payload)
         raise typer.Exit(1)
     _echo_json(payload)
+
+
+@app.command()
+def render_real_run_acceptance_template(
+    run_id: str = typer.Option(..., "--run-id"),
+    config: Path = typer.Option(DEFAULT_REAL_DATA_SMOKE_CONFIG, "--config"),
+    db_url: str = typer.Option(DEFAULT_DB_URL, "--db-url"),
+    memo_dir: Path = typer.Option(Path("data/processed"), "--memo-dir"),
+    output_path: Path | None = typer.Option(None, "--output-path"),
+    git_sha: str | None = typer.Option(None, "--git-sha"),
+    operator: str | None = typer.Option(None, "--operator"),
+    smoke_report_path: Path | None = typer.Option(None, "--smoke-report-path"),
+) -> None:
+    if not DEFAULT_REAL_RUN_ACCEPTANCE_TEMPLATE.exists():
+        _exit_with_error(
+            FileNotFoundError(f"Missing template: {DEFAULT_REAL_RUN_ACCEPTANCE_TEMPLATE}")
+        )
+    resolved_output = output_path or (
+        DEFAULT_REAL_RUN_ACCEPTANCE_DIR / f"real_run_acceptance_{_safe_report_name(run_id)}.md"
+    )
+    context = {
+        "run_id": run_id,
+        "operator": operator or "TODO: operator name",
+        "run_date": date.today().isoformat(),
+        "git_sha": git_sha or _current_git_sha() or "TODO: git SHA",
+        "config_path": str(config),
+        "db_url": db_url,
+        "memo_dir": str(memo_dir),
+        "raw_cache_dir": "data/raw",
+        "output_path": str(resolved_output),
+        "project_stock_allow_network": os.getenv(NETWORK_ENV_VAR, "false"),
+        "fred_api_key_present": _yes_no(bool(os.getenv("FRED_API_KEY", "").strip())),
+        "ecos_api_key_present": _yes_no(bool(os.getenv("ECOS_API_KEY", "").strip())),
+        "opendart_api_key_present": _yes_no(
+            bool(os.getenv("DART_API_KEY", "").strip())
+            or bool(os.getenv("OPEN_DART_API_KEY", "").strip())
+        ),
+        "krx_credential_status": (
+            "present"
+            if bool(os.getenv("KRX_AUTH_TOKEN", "").strip())
+            or bool(os.getenv("KRX_API_KEY", "").strip())
+            else "not required / not set"
+        ),
+        "smoke_report_path": str(smoke_report_path)
+        if smoke_report_path is not None
+        else "TODO: paste smoke report path after bounded real smoke.",
+        "no_auto_trade": "true",
+    }
+    rendered = _render_markdown_template(DEFAULT_REAL_RUN_ACCEPTANCE_TEMPLATE, context)
+    resolved_output.parent.mkdir(parents=True, exist_ok=True)
+    resolved_output.write_text(rendered, encoding="utf-8")
+    _echo_json(
+        {
+            "status": "ok",
+            "output_path": str(resolved_output),
+            "template_path": str(DEFAULT_REAL_RUN_ACCEPTANCE_TEMPLATE),
+            "no_auto_trade": True,
+        }
+    )
 
 
 @app.command()

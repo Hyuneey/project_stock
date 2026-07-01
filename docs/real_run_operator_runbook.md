@@ -140,6 +140,22 @@ In the KOR_SEMI drilldown, inspect:
 
 Review actions are prompts for human analysis. They are not trade orders.
 
+## Render Acceptance Report
+
+After preflight, doctors, dry-run, fixture smoke, bounded real smoke, dashboard
+launch, and KOR_SEMI drilldown review, render a local acceptance report shell:
+
+```bash
+project-stock render-real-run-acceptance-template --run-id REAL_RUN_YYYYMMDD_001 --config configs/real_data_smoke.kor_semi.example.yaml --db-url sqlite:///./data/warehouse/real_run.sqlite --memo-dir data/processed/real_run --output-path data/processed/real_run_acceptance/REAL_RUN_YYYYMMDD_001.md
+```
+
+Manually fill the TODO sections, choose one final acceptance decision
+(`accepted`, `accepted_with_notes`, `rejected`, or `rerun_required`), and confirm
+that no automated trading occurred. The rendered report path is under
+`data/processed/real_run_acceptance/`, which is ignored as generated output.
+Do not commit raw data, raw cache files, database files, generated acceptance
+reports, or real API outputs unless the document is a sanitized example.
+
 ## Failure Handling
 
 If preflight fails, fix environment variables, config paths, or DB/memo paths

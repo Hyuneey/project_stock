@@ -68,6 +68,16 @@ Complete this checklist after any bounded real official-data smoke run.
 - [ ] Thesis state monitor inspected.
 - [ ] KOR_SEMI drilldown inspected when relevant.
 
+## Acceptance Report
+
+- [ ] `project-stock render-real-run-acceptance-template --run-id ...` was run.
+- [ ] Generated report path is under `data/processed/real_run_acceptance/`.
+- [ ] Generated report is not committed unless it is a sanitized example.
+- [ ] Manual final acceptance decision selected: `accepted`,
+      `accepted_with_notes`, `rejected`, or `rerun_required`.
+- [ ] Raw data, raw cache files, database files, generated outputs, and real API
+      outputs were not committed.
+
 ## Error/Warning Review
 
 - [ ] CLI warnings reviewed.
